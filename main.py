@@ -217,8 +217,11 @@ async def signup(user: User):
        "INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3) RETURNING id",
         user.username, hashed_password, "student"
         )
-
+        print("resuuuuul    ",result)
+   
         new_id = await result.fetchone()
+        print("newwwww    ",new_id)
+
         # # Generate a JWT token
         # payload = {
         #     "username": user.username,
@@ -480,7 +483,7 @@ async def add_enroll(item: EnrollCreate):
     hashed_password = hash_password(password)
     
     try:
-        result = await conn.execute("""
+        result = await conn.fetchrow("""
             INSERT INTO users (username, password_hash, role, firstname, lastname, bio, contact, ssn, year_born)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             ON CONFLICT (username) 
@@ -495,7 +498,7 @@ async def add_enroll(item: EnrollCreate):
         """, username, hashed_password, "student", item.firstname, item.lastname, item.bio, item.phone, item.ssn, item.birth_year)
         print("resuuuuul    ",result)
 
-        new_id = await result.fetchone()
+        # new_id = await result.fetchone()
         print("newwww    ",new_id)
         # Insert the new item into the items table
         await conn.execute(
@@ -535,7 +538,21 @@ async def add_class(item: ClassCreate):
     finally:
         await conn.close()
 
-
+@app.post("/fu")
+async def add_class():
+    conn = await get_db_connection()
+    try:
+        # Insert the new item into the items table
+        result=await conn.fetchrow(
+            "INSERT INTO test_table (name) VALUES ('Test Name') RETURNING id;"
+        )
+        print("resuuuuul    ",result["id"])
+        
+        return {"message": "class added successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await conn.close()
 
 @app.post("/add_teacher", dependencies=[Depends(verify_admin)])
 async def add_teacher(user: User):
