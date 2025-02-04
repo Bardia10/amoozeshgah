@@ -457,11 +457,26 @@ async def add_enroll(item: EnrolCreate):
     finally:
         await conn.close()
 
-@app.post("/enroll", dependencies=[Depends(verify_student)])
+
+
+
+class EnrollCreate(BaseModel):
+    firstname:str
+    lastname:str
+    ssn:str 
+    phone:str = "09"
+    birth_year:int =13
+    bio:str ="i am"
+    class_id:int 
+    day:str
+    time:str
+
+
+@app.post("/enroll")
 async def add_enroll(item: EnrollCreate):
     conn = await get_db_connection()
     username=item.ssn
-    password=item.birth_year
+    password=str(item.birth_year)
     hashed_password = hash_password(password)
     
     try:
@@ -478,13 +493,14 @@ async def add_enroll(item: EnrollCreate):
             password_hash = EXCLUDED.password_hash
             RETURNING id
         """, username, hashed_password, "student", item.firstname, item.lastname, item.bio, item.phone, item.ssn, item.birth_year)
+        print("resuuuuul    ",result)
 
         new_id = await result.fetchone()
-
+        print("newwww    ",new_id)
         # Insert the new item into the items table
         await conn.execute(
             "INSERT INTO enrolls (student_id, class_id,day,time,date_at,status,credit,credit_spent) VALUES ($1, $2,$3,$4,$5,$6,$7,$8)",
-            new_id,
+            result,
             item.class_id,
             item.day,
             item.time,
@@ -498,17 +514,6 @@ async def add_enroll(item: EnrollCreate):
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await conn.close()
-
-class EnrollCreate(BaseModel):
-    firstname:str
-    lastname:str
-    ssn:str 
-    phone:str = "09"
-    birth_year:int ="13"
-    bio:str ="i am"
-    class_id:int 
-    day:str
-    time:str
 
 
 
