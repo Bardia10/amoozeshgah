@@ -77,16 +77,34 @@ limiter = Limiter(key_func=get_remote_address)
 # Password hashing context with bcrypt and a cost factor of 10
 # pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=10)
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto", pbkdf2_sha256__rounds=200000)
-# Pydantic model for user registration
-class User(BaseModel):
-    username: str
-    password: str
+
+
+
+###AUTH###
+
+class VarifyPayment(BaseModel):
+    token:str
+    amount:int 
+
+
+
+###GENERAL###
 
 # Pydantic model for user login
 class UserLogin(BaseModel):
     username: str
     password: str
 
+
+# Pydantic model for user registration
+class User(BaseModel):
+    username: str
+    password: str
+
+
+
+
+###ADMIN###
 class InstcatCreate(BaseModel):
     title: str
     desc: str = "fr"
@@ -117,11 +135,24 @@ class ClassCreate(BaseModel):
     course_id: int
     teacher_id: int
 
+class SessionCreate(BaseModel):
+    enroll_id: str 
+    year: int
+    month: int
+    day: int
+    
 
 
-class EnrolCreate(BaseModel):
-    student_id:int
-    class_id:int
+###STUDENT###
+
+class EnrollCreate(BaseModel):
+    firstname:str
+    lastname:str
+    ssn:str 
+    phone:str = "09"
+    birth_year:int =13
+    bio:str ="i am"
+    class_id:int 
     day:str
     time:str
 
@@ -132,16 +163,21 @@ class Sched(BaseModel):
     day:str
     time:str
 
+
+###TEACHER###
 class UpdateSched(BaseModel):
     teacher_id:int
     busy: List[Sched]
     free: List[Sched]
 
-
+###DATABASE###
 # Function to connect to the database
 async def get_db_connection():
     return await asyncpg.connect(DATABASE_URL)
 
+
+
+###AUTH###
 # Helper function to hash passwords
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
@@ -149,21 +185,6 @@ def hash_password(password: str) -> str:
 # Helper function to verify passwords
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
-
-# Dependency to check JWT
-# def verify_jwt(request: Request):
-#     token = request.headers.get("Authorization")
-    
-#     if token is None:
-#         raise HTTPException(status_code=401, detail="Authorization header missing")
-    
-#     token = token.split(" ")[1] if " " in token else token
-    
-#     try:
-#         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-#         return payload  # Return the decoded payload
-#     except JWTError:
-#         raise HTTPException(status_code=401, detail="Invalid token or token has expired")
 
 def verify_jwt(authorization: str = Header(...)):
     if authorization is None:
@@ -177,8 +198,18 @@ def verify_jwt(authorization: str = Header(...)):
     except JWTError as e:  # Capture the JWTError as 'e'
         raise HTTPException(status_code=401, detail=f"Invalid token or token has expired: {str(e)}") 
 
+def generate_jwt(sub,role,days):
+    payload = {
+            "sub": sub,
+            "role": role,
+            "exp": datetime.utcnow() + timedelta(days=days)  # Token expires in 30 minutes
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    return token
 
 
+
+###DEPENDENCIES###
 # Dependency to check if user is an admin
 def verify_admin(user: dict = Depends(verify_jwt)):
     if user.get("role") != "admin":
@@ -191,15 +222,153 @@ def verify_student(user: dict = Depends(verify_jwt)):
     return user
 
 
-@app.get("/items/", dependencies=[Depends(verify_jwt)])
-async def read_items():
-    return [{"item": "item1"}, {"item": "item2"}]
+
+
+###ADMIN###
+
+#SIGN UP STUDENTS AND TEACHERS
+
+@app.post("/add_instcat", dependencies=[Depends(verify_admin)])
+async def add_instcat(item: InstcatCreate):
+    conn = await get_db_connection()
+    try:
+        # Insert the new item into the items table
+        await conn.execute(
+            "INSERT INTO instcategories (title, description,image) VALUES ($1, $2,$3)",
+            item.title,
+            item.desc,
+            item.image
+        )
+        return {"message": "Item added successfully"}
+    except Exception as e:
+        print("h")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await conn.close()
+
+
+@app.post("/add_instfam", dependencies=[Depends(verify_admin)])
+async def add_instcat(item: InstfamCreate):
+    conn = await get_db_connection()
+    try:
+        # Insert the new item into the items table
+        await conn.execute(
+            "INSERT INTO instfamilies (title, description,image,category_id) VALUES ($1, $2,$3,$4)",
+            item.title,
+            item.desc,
+            item.image,
+            item.cat_id
+        )
+        return {"message": "Item added successfully"}
+    except Exception as e:
+        print("h")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await conn.close()
+
+@app.post("/add_instrument", dependencies=[Depends(verify_admin)])
+async def add_course(item: InstrumentCreate):
+    conn = await get_db_connection()
+    try:
+        # Insert the new item into the items table
+        await conn.execute(
+            "INSERT INTO instruments (title, description,image,family_id) VALUES ($1, $2,$3,$4)",
+            item.title,
+            item.desc,
+            item.image,
+            item.fam_id
+        )
+        return {"message": "instrument added successfully"}
+    except Exception as e:
+        print("h")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await conn.close()
+
+@app.post("/add_course", dependencies=[Depends(verify_admin)])
+async def add_course(item: CourseCreate):
+    conn = await get_db_connection()
+    try:
+        # Insert the new item into the items table
+        await conn.execute(
+            "INSERT INTO courses (title, description,image,family_id,instrument_id) VALUES ($1, $2,$3,$4,$5)",
+            item.title,
+            item.desc,
+            item.image,
+            item.fam_id,
+            item.inst_id
+        )
+        return {"message": "course added successfully"}
+    except Exception as e:
+        print("h")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await conn.close()
 
 
 
-# Signup route
-@app.post("/signup")
-async def signup(user: User):
+
+def get_jalili(time,day,week_delta):
+    # Get today's time, like give me the timestamp of today when the clock is 13:44
+    now = datetime.now()
+    today_time = now.replace(hour=int(time.split(':')[0]), minute=int(time.split(':')[1]), second=0, microsecond=0)
+
+    # Get today's day, like is it Tuesday or what, then convert it to a number when Saturday is 1 and Friday is 7
+    today_day = (now.weekday() + 2) % 7 + 1  # Adjust to make Saturday = 1 and Friday = 7
+
+    # Timestamp + day delta to get this week day time
+    target_day_timestamp = today_time + timedelta(days=(day - today_day))
+
+    # Timestamp + delta week to get the actual timestamp
+    final_timestamp = target_day_timestamp + timedelta(weeks=week_delta)
+
+    # Convert to Jalali date
+    jalali_date = JalaliDate(final_timestamp)
+
+    # Format the Jalali date as yyyy/mm/dd
+    formatted_jalali_date = f"{jalali_date.year}/{jalali_date.month:02}/{jalali_date.day:02}"
+    return {"date":formatted_jalali_date,"date_at":final_timestamp}
+
+@app.post("/add_session", dependencies=[Depends(verify_admin)])
+async def add_session(item: SessionCreate):
+    conn = await get_db_connection()
+    try:
+        date = get_jalili(item.time,item.day,item.week_delta) 
+        # Insert the new item into the items table
+        await conn.execute(
+            "INSERT INTO classe_sessions (enroll_id,date,date_at,is_deleted) VALUES ($1, $2,$3,$4)",
+            item.enroll_id,
+            date,
+            date_at,
+            False
+        )
+        return {"message": "session added successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await conn.close()
+
+@app.post("/add_class", dependencies=[Depends(verify_admin)])
+async def add_class(item: ClassCreate):
+    conn = await get_db_connection()
+    try:
+        # Insert the new item into the items table
+        await conn.execute(
+            "INSERT INTO classes (description,price,course_id,teacher_id) VALUES ($1, $2,$3,$4)",
+            item.desc,
+            item.price,
+            item.course_id,
+            item.teacher_id
+        )
+        return {"message": "class added successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await conn.close()
+
+
+@app.post("/add_teacher", dependencies=[Depends(verify_admin)])
+async def add_teacher(user: User):
     conn = await get_db_connection()
     try:
         # Check if the username already exists
@@ -210,68 +379,75 @@ async def signup(user: User):
         # Hash the password before storing it
         hashed_password = hash_password(user.password)
 
-        # # Insert the new user into the database
-        # await conn.execute("INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3)",
-        #                    user.username, hashed_password, "student")
-        result = await conn.execute(
-       "INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3) RETURNING id",
-        user.username, hashed_password, "student"
-        )
-        print("resuuuuul    ",result)
-   
-        new_id = await result.fetchone()
-        print("newwwww    ",new_id)
+        # Insert the new user into the database
+        await conn.execute("INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3)",
+                           user.username, hashed_password, "teacher")
 
-        # # Generate a JWT token
-        # payload = {
-        #     "username": user.username,
-        #     "role": "student",
-        #     "exp": datetime.utcnow() + timedelta(days=7)  # Token expires in 30 minutes
-        # }
-        # token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-        token = generate_jwt(new_id,"student",4)
-
-        return {"message": "User created successfully", "token": token}
+        return {"message": "User created successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await conn.close()
 
-# Login route with rate limiting
-@app.post("/login")
-@limiter.limit("5/minute")  # Limit to 5 login attempts per minute
-async def login(request: Request, user: UserLogin):  # Add request parameter
+
+
+
+
+
+
+# Signup route
+@app.post("/add_enroll", dependencies=[Depends(verify_admin)])
+async def add_enroll(item: EnrollCreate):
     conn = await get_db_connection()
+    username=item.ssn
+    password=str(item.birth_year)
+    hashed_password = hash_password(password)
+    
     try:
-        # Fetch the user from the database
-        existing_user = await conn.fetchrow("SELECT * FROM users WHERE username = $1", user.username)
-        
-        if existing_user is None or not verify_password(user.password, existing_user['password_hash']):
-            raise HTTPException(status_code=401, detail="Invalid username or password")
+        # # Check if the username already exists
+        # existing_user = await conn.fetchrow("SELECT * FROM users WHERE username = $1", user.username)
+        # if existing_user:
+        #     raise HTTPException(status_code=400, detail="Username already exists")
+     
+        result = await conn.fetchrow("""
+            INSERT INTO users (username, password_hash, role, firstname, lastname, bio, contact, ssn, year_born)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ON CONFLICT (username) 
+            DO UPDATE SET 
+            firstname = EXCLUDED.firstname,
+            lastname = EXCLUDED.lastname,
+            contact = EXCLUDED.contact,
+            bio = EXCLUDED.bio,
+            year_born = EXCLUDED.year_born,
+            password_hash = EXCLUDED.password_hash
+            RETURNING id
+        """, username, hashed_password, "student", item.firstname, item.lastname, item.bio, item.phone, item.ssn, item.birth_year)
 
-        # # Generate a JWT token
-        # payload = {
-        #     "username": user.username,
-        #     "role": existing_user['role'],
-        #     "exp": datetime.utcnow() + timedelta(minutes=30)  # Token expires in 30 minutes
-        # }
-        # token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-        token = generate_jwt(existing_user['id'],existing_user['role'],4)
 
-        return {"message": "Login successful", "token": token}
+        new_id = result["id"]
+        # Insert the new item into the items table
+        enroll_result = await conn.fetchrow(
+            "INSERT INTO enrolls (student_id, class_id,day,time,date_at,status,credit,credit_spent) VALUES ($1, $2,$3,$4,$5,$6,$7,$8) RETURNING id",
+            new_id,
+            item.class_id,
+            item.day,
+            item.time,
+            datetime.utcnow(),
+            1,
+            4,
+            0
+        )
+
+        return {"message": "enroll added successfully"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500,  detail=str(e))
     finally:
-        await conn.close()
+          await conn.close()
 
-def generate_jwt(sub,role,days):
-    payload = {
-            "sub": sub,
-            "role": role,
-            "exp": datetime.utcnow() + timedelta(days=days)  # Token expires in 30 minutes
-    }
-    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-    return token
+
+
+###GENERAL###
+
  
 @app.get("/get_instcat")
 async def get_items(request: Request):
@@ -362,99 +538,28 @@ async def get_items(teacher_id: int, request: Request):
         await conn.close()
 
 
-@app.post("/add_instcat", dependencies=[Depends(verify_admin)])
-async def add_instcat(item: InstcatCreate):
+# Login route with rate limiting
+@app.post("/login")
+@limiter.limit("5/minute")  # Limit to 5 login attempts per minute
+async def login(request: Request, user: UserLogin):  # Add request parameter
     conn = await get_db_connection()
     try:
-        # Insert the new item into the items table
-        await conn.execute(
-            "INSERT INTO instcategories (title, description,image) VALUES ($1, $2,$3)",
-            item.title,
-            item.desc,
-            item.image
-        )
-        return {"message": "Item added successfully"}
-    except Exception as e:
-        print("h")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        await conn.close()
+        # Fetch the user from the database
+        existing_user = await conn.fetchrow("SELECT * FROM users WHERE username = $1", user.username)
+        
+        if existing_user is None or not verify_password(user.password, existing_user['password_hash']):
+            raise HTTPException(status_code=401, detail="Invalid username or password")
 
+        # # Generate a JWT token
+        # payload = {
+        #     "username": user.username,
+        #     "role": existing_user['role'],
+        #     "exp": datetime.utcnow() + timedelta(minutes=30)  # Token expires in 30 minutes
+        # }
+        # token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+        token = generate_jwt(existing_user['id'],existing_user['role'],4)
 
-@app.post("/add_instfam", dependencies=[Depends(verify_admin)])
-async def add_instcat(item: InstfamCreate):
-    conn = await get_db_connection()
-    try:
-        # Insert the new item into the items table
-        await conn.execute(
-            "INSERT INTO instfamilies (title, description,image,category_id) VALUES ($1, $2,$3,$4)",
-            item.title,
-            item.desc,
-            item.image,
-            item.cat_id
-        )
-        return {"message": "Item added successfully"}
-    except Exception as e:
-        print("h")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        await conn.close()
-
-@app.post("/add_instrument", dependencies=[Depends(verify_admin)])
-async def add_course(item: InstrumentCreate):
-    conn = await get_db_connection()
-    try:
-        # Insert the new item into the items table
-        await conn.execute(
-            "INSERT INTO instruments (title, description,image,family_id) VALUES ($1, $2,$3,$4)",
-            item.title,
-            item.desc,
-            item.image,
-            item.fam_id
-        )
-        return {"message": "instrument added successfully"}
-    except Exception as e:
-        print("h")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        await conn.close()
-
-@app.post("/add_course", dependencies=[Depends(verify_admin)])
-async def add_course(item: CourseCreate):
-    conn = await get_db_connection()
-    try:
-        # Insert the new item into the items table
-        await conn.execute(
-            "INSERT INTO courses (title, description,image,family_id,instrument_id) VALUES ($1, $2,$3,$4,$5)",
-            item.title,
-            item.desc,
-            item.image,
-            item.fam_id,
-            item.inst_id
-        )
-        return {"message": "course added successfully"}
-    except Exception as e:
-        print("h")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        await conn.close()
-
-
-
-@app.post("/enrol", dependencies=[Depends(verify_student)])
-async def add_enroll(item: EnrolCreate):
-    conn = await get_db_connection()
-    try:
-        # Insert the new item into the items table
-        await conn.execute(
-            "INSERT INTO enrolls (student_id, class_id,day,time,date_at) VALUES ($1, $2,$3,$4,$5)",
-            item.student_id,
-            item.class_id,
-            item.day,
-            item.time,
-            datetime.utcnow()
-        )
-        return {"message": "enrolled successfully"}
+        return {"message": "Login successful", "token": token}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -463,20 +568,25 @@ async def add_enroll(item: EnrolCreate):
 
 
 
-class EnrollCreate(BaseModel):
-    firstname:str
-    lastname:str
-    ssn:str 
-    phone:str = "09"
-    birth_year:int =13
-    bio:str ="i am"
-    class_id:int 
-    day:str
-    time:str
+###STUDENT###
 
+
+
+
+
+merchant_id	= "mervh123"
+
+def request_payment(amount:int):
+    callback_url = "google.com"
+    token = merchant_id+callback_url+str(amount)
+    return token
+
+def create_pay_url(token:str):
+    url = "google.com/"+token
+    return url
 
 @app.post("/enroll")
-async def add_enroll(item: EnrollCreate):
+async def submit_enroll(item: EnrollCreate):
     conn = await get_db_connection()
     username=item.ssn
     password=str(item.birth_year)
@@ -496,14 +606,12 @@ async def add_enroll(item: EnrollCreate):
             password_hash = EXCLUDED.password_hash
             RETURNING id
         """, username, hashed_password, "student", item.firstname, item.lastname, item.bio, item.phone, item.ssn, item.birth_year)
-        print("resuuuuul    ",result)
 
-        # new_id = await result.fetchone()
-        print("newwww    ",new_id)
+        new_id = result["id"]
         # Insert the new item into the items table
-        await conn.execute(
-            "INSERT INTO enrolls (student_id, class_id,day,time,date_at,status,credit,credit_spent) VALUES ($1, $2,$3,$4,$5,$6,$7,$8)",
-            result,
+        enroll_result = await conn.fetchrow(
+            "INSERT INTO enrolls (student_id, class_id,day,time,date_at,status,credit,credit_spent) VALUES ($1, $2,$3,$4,$5,$6,$7,$8) RETURNING id",
+            new_id,
             item.class_id,
             item.day,
             item.time,
@@ -512,71 +620,71 @@ async def add_enroll(item: EnrollCreate):
             4,
             0
         )
-        return {"message": "enrolled successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        await conn.close()
-
-
-
-@app.post("/add_class", dependencies=[Depends(verify_admin)])
-async def add_class(item: ClassCreate):
-    conn = await get_db_connection()
-    try:
-        # Insert the new item into the items table
+        enroll_id = enroll_result["id"]
+        amount = await conn.fetchrow("SELECT price FROM classes WHERE id = $1", item.class_id)
+        token=request_payment(amount["price"])
+        url = create_pay_url(token)
         await conn.execute(
-            "INSERT INTO classes (description,price,course_id,teacher_id) VALUES ($1, $2,$3,$4)",
-            item.desc,
-            item.price,
-            item.course_id,
-            item.teacher_id
+            "INSERT INTO pay_tokens (token,enroll_id, created_at,is_deleted) VALUES ($1, $2,$3,$4)",
+            token,
+            enroll_id,
+            datetime.utcnow(),
+            False
         )
-        return {"message": "class added successfully"}
+        return {"message": "enrolled successfully","url": url}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await conn.close()
 
-@app.post("/fu")
-async def add_class():
+
+def varify_request(token, amount):
+  return True
+
+@app.get("/varify_payment")
+async def varify_payment(token: str , amount: int ):
     conn = await get_db_connection()
     try:
-        # Insert the new item into the items table
-        result=await conn.fetchrow(
-            "INSERT INTO test_table (name) VALUES ('Test Name') RETURNING id;"
-        )
-        print("resuuuuul    ",result["id"])
+        pay_request = await conn.fetchrow("SELECT * FROM pay_tokens WHERE token = $1", token)
         
-        return {"message": "class added successfully"}
+        # Check if the payment token exists
+        if not pay_request:
+            raise HTTPException(status_code=400, detail="Invalid or expired token.")
+
+        # Verify the payment
+        answer = varify_request(token=token, amount=amount)
+        
+        # Check if the payment was successful
+        if not answer:
+            raise HTTPException(status_code=400, detail="Payment has not taken place.")
+
+        # Update the enrolls table
+        await conn.execute(
+            "UPDATE enrolls SET status = 1 WHERE id = $1",
+            pay_request["enroll_id"]
+        )
+
+        # Update the pay_tokens table
+        await conn.execute(
+            "UPDATE pay_tokens SET is_deleted = TRUE, deleted_at = $1 WHERE id = $2",
+            datetime.utcnow(),
+            pay_request["id"]
+        )
+
+        return {"message": "Payment verified successfully."}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
     finally:
         await conn.close()
 
-@app.post("/add_teacher", dependencies=[Depends(verify_admin)])
-async def add_teacher(user: User):
-    conn = await get_db_connection()
-    try:
-        # Check if the username already exists
-        existing_user = await conn.fetchrow("SELECT * FROM users WHERE username = $1", user.username)
-        if existing_user:
-            raise HTTPException(status_code=400, detail="Username already exists")
-
-        # Hash the password before storing it
-        hashed_password = hash_password(user.password)
-
-        # Insert the new user into the database
-        await conn.execute("INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3)",
-                           user.username, hashed_password, "teacher")
-
-        return {"message": "User created successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        await conn.close()
 
 
+
+
+
+###TEACHER###
 
 @app.put("/teacher_sched", dependencies=[Depends(verify_jwt)])
 async def update_sched(body: UpdateSched,user: dict = Depends(verify_jwt)):
@@ -643,6 +751,12 @@ async def get_items(teacher_id: int,user: dict = Depends(verify_jwt)):
     finally:
         await conn.close()
 
+
+
+
+
+
+
 # @app.post("/listest")
 # async def receive_data(input_data: InputModel):
 #     result_on = []
@@ -666,9 +780,27 @@ async def get_items(teacher_id: int,user: dict = Depends(verify_jwt)):
 
 #     return {"on": result_on, "off": result_off}
 
-
-
-
+###TEST###
 @app.get("/")
 async def read_root():
      return {"message": "Welcome to FatAPI!"}
+
+@app.get("/items/", dependencies=[Depends(verify_jwt)])
+async def read_items():
+    return [{"item": "item1"}, {"item": "item2"}]
+
+@app.post("/fu")
+async def add_class():
+    conn = await get_db_connection()
+    try:
+        # Insert the new item into the items table
+        result=await conn.fetchrow(
+            "INSERT INTO test_table (name) VALUES ('Test Name') RETURNING id;"
+        )
+        print("resuuuuul    ",result["id"])
+        
+        return {"message": "class added successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await conn.close()
