@@ -57,34 +57,45 @@
 
 
 from fastapi import FastAPI, Depends, HTTPException, Request, Header
-from pydantic import BaseModel
-from typing import List
 import asyncpg
 from jose import jwt, JWTError
 import datetime
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from passlib.context import CryptContext
-from datetime import datetime,timedelta
+from datetime import datetime,timedelta,time, date
+from pydantic import BaseModel, constr, conint
+from enum import Enum
+from typing import Optional,List
 
-DATABASE_URL = "postgresql://postgres:bardiapostgres@127.0.0.1:5432/postgres"
-SECRET_KEY = "kilideserry"  # Replace with your actual secret key
-ALGORITHM = "HS256"
+
+
 
 app = FastAPI()
-limiter = Limiter(key_func=get_remote_address)
-
-# Password hashing context with bcrypt and a cost factor of 10
-# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=10)
-pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto", pbkdf2_sha256__rounds=200000)
 
 
+
+class Day(str, Enum):
+    monday = "Monday"
+    tuesday = "Tuesday"
+    wednesday = "Wednesday"
+    thursday = "Thursday"
+    friday = "Friday"
+
+# class Enro(BaseModel):
+#     firstname: constr(min_length=1, max_length=50)
+#     lastname: constr(min_length=1, max_length=50)
+#     ssn: constr(regex=r'^\d{3}-\d{2}-\d{4}$')  # Format: XXX-XX-XXXX
+#     phone: constr(regex=r'^\+?1?\d{9,15}$')  # Phone number format
+#     birth_year: conint(ge=1900, le=2023)  # Year between 1900 and 2023
+#     bio: str = "I am"
+#     class_id: int
+#     date_of_birth: date  # YYYY-MM-DD format
+#     schedule: Sched  # Nested model
+#     op_day: Optional[Day] = None 
 
 ###AUTH###
 
-class VarifyPayment(BaseModel):
-    token:str
-    amount:int 
 
 
 
@@ -95,32 +106,120 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
+class UserLoginResponse(BaseModel):
+    message: str
+    token: str
 
 # Pydantic model for user registration
 class User(BaseModel):
-    username: str
-    password: str
+    username: constr(min_length=1, max_length=50)
+    password: constr(min_length=1, max_length=20)
 
+
+class Category(BaseModel):
+    id: int  
+    title: str 
+    description: Optional[str] 
+    image: Optional[str]
+
+class Family(BaseModel):
+    id: int  
+    title: str 
+    description: Optional[str] 
+    image: Optional[str]
+    category_id: int  
+
+
+class Course(BaseModel):
+    id: int  
+    title: str 
+    description: Optional[str] 
+    image: Optional[str]
+    family_id: int  
+    instrument_id: int  
+
+class GetFamilyResponse(BaseModel):
+    courses: List[Course]
+    title: str 
+    description: Optional[str] = None
+
+class Teacher(BaseModel):
+    id: int
+    firstname: str
+    lastname: str
+    bio: Optional[str] = None
+    image: Optional[str] = None
+
+class Class(BaseModel):
+    id: int  
+    description: Optional[str] 
+    course_id: int  
+    teacher_id: int 
+    price: int 
+    dayPerWeek: int 
+
+class Instrument(BaseModel):
+    id: int  
+    title: str 
+    description: Optional[str] 
+    image: Optional[str]
+    family_id: int  
+    lowPrice: int  
+    midPrice: int  
+    highPrice: int  
+
+class ClassDetail(BaseModel):
+    class_: Class  
+    teacher: Teacher
+
+class CourseResponse(BaseModel):
+    classes: List[ClassDetail]
+    course: Course
+    instrument: Optional[Instrument] = None  
+
+
+class EnrollmentTime(BaseModel):
+    time: str
+    day: str  
+
+class Schedule(BaseModel): 
+    time: str
+    day: str       
+
+class GeneralSchedulesResponse(BaseModel):
+    classes: List[EnrollmentTime]
+    busy: List[Schedule]
 
 
 
 ###ADMIN###
-class InstcatCreate(BaseModel):
+class CategoryCreate(BaseModel):
     title: str
     desc: str = "fr"
     image: str = "https://encrypted-tbn0.gstatic.com/images?q=" #tbn:ANd9GcROxd3wbPbbF0k8mwAE8RdwIZwxYftJFEtH0w&s
 
-class InstfamCreate(BaseModel):
+class CategoryCreateResponse(BaseModel):
+    message: str
+
+
+class FamilyCreate(BaseModel):
     title: str
     desc: str 
     image: str = "https://encrypted-tbn0.gstatic.com/images?q=" #tbn:ANd9GcROxd3wbPbbF0k8mwAE8RdwIZwxYftJFEtH0w&s
     cat_id: int
+
+class FamilyCreateResponse(BaseModel):
+    message: str
+
 
 class InstrumentCreate(BaseModel):
     title: str
     desc: str 
     image: str = "https://encrypted-tbn0.gstatic.com/images?q=" #tbn:ANd9GcROxd3wbPbbF0k8mwAE8RdwIZwxYftJFEtH0w&s
     fam_id: int
+
+class InstrumentCreateResponse(BaseModel):
+    message: str
 
 class CourseCreate(BaseModel):
     title: str
@@ -129,19 +228,50 @@ class CourseCreate(BaseModel):
     fam_id: int
     inst_id: int
 
+class CourseCreateResponse(BaseModel):
+    message: str
+
 class ClassCreate(BaseModel):
     desc: str 
-    price: int = 700
+    price: conint(ge=71, le=1500) = 700
     course_id: int
     teacher_id: int
 
+class ClassCreateResponse(BaseModel):
+    message: str
+
+class TeacherCreate(BaseModel):
+    username: constr(min_length=1, max_length=50)
+    password: constr(min_length=1, max_length=20)
+
+class TeacherCreateResponse(BaseModel):
+    message: str
+
 class SessionCreate(BaseModel):
     enroll_id: str 
-    year: int
-    month: int
-    day: int
+    year: conint(ge=1402, le=1500)
+    month: conint(ge=0, le=12)
+    day: conint(ge=0, le=31)
     
+class SessionCreateResponse(BaseModel):
+    message: str
 
+
+class ClassEnrollment(BaseModel):
+    time: str
+    day: str  
+
+class AddEnrollResponse(BaseModel):
+    message: str
+
+class Schedule(BaseModel): 
+    teacher_id: int
+    time: str
+    day: str       
+
+class GetSchedulesResponse(BaseModel):
+    classes: List[ClassEnrollment]
+    busy: List[Schedule]
 
 ###STUDENT###
 
@@ -156,21 +286,52 @@ class EnrollCreate(BaseModel):
     day:str
     time:str
 
+class EnrollResponse(BaseModel):
+    message: str
+    url: str
+
+class VarifyPayment(BaseModel):
+    token:str
+    amount:int 
+
+class VarifyPaymentResponse(BaseModel):
+    message: str
 
 
-
-class Sched(BaseModel):
+class Schedule(BaseModel):
     day:str
     time:str
 
 
 ###TEACHER###
-class UpdateSched(BaseModel):
+class UpdateSchedules(BaseModel):
     teacher_id:int
-    busy: List[Sched]
-    free: List[Sched]
+    busy: List[Schedule]
+    free: List[Schedule]
+
+class UpdateSchedulesResponse(BaseModel):
+    message: str
+
+class ClassEnrollment(BaseModel):
+    time: str
+    day: str  
+    lastname: str  
+    title: str  
+
+class Schedule(BaseModel): 
+    time: str
+    day: str       
+
+class GetSchedulesResponse(BaseModel):
+    classes: List[ClassEnrollment]
+    busy: List[Schedule]
+
+
 
 ###DATABASE###
+
+DATABASE_URL = "postgresql://postgres:bardiapostgres@127.0.0.1:5432/postgres"
+
 # Function to connect to the database
 async def get_db_connection():
     return await asyncpg.connect(DATABASE_URL)
@@ -178,6 +339,12 @@ async def get_db_connection():
 
 
 ###AUTH###
+
+SECRET_KEY = "kilideserry"  # Replace with your actual secret key
+ALGORITHM = "HS256"
+
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto", pbkdf2_sha256__rounds=200000)
+
 # Helper function to hash passwords
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
@@ -200,7 +367,7 @@ def verify_jwt(authorization: str = Header(...)):
 
 def generate_jwt(sub,role,days):
     payload = {
-            "sub": sub,
+            "sub": str(sub),
             "role": role,
             "exp": datetime.utcnow() + timedelta(days=days)  # Token expires in 30 minutes
     }
@@ -221,6 +388,7 @@ def verify_student(user: dict = Depends(verify_jwt)):
         raise HTTPException(status_code=403, detail="Not enough permissions")
     return user
 
+limiter = Limiter(key_func=get_remote_address)
 
 
 
@@ -228,8 +396,8 @@ def verify_student(user: dict = Depends(verify_jwt)):
 
 #SIGN UP STUDENTS AND TEACHERS
 
-@app.post("/add_instcat", dependencies=[Depends(verify_admin)])
-async def add_instcat(item: InstcatCreate):
+@app.post("/category", dependencies=[Depends(verify_admin)], response_model=CategoryCreateResponse)
+async def add_instcat(item: CategoryCreate):
     conn = await get_db_connection()
     try:
         # Insert the new item into the items table
@@ -239,7 +407,10 @@ async def add_instcat(item: InstcatCreate):
             item.desc,
             item.image
         )
-        return {"message": "Item added successfully"}
+
+        return CategoryCreateResponse(
+            message="Item added successfully"
+        )
     except Exception as e:
         print("h")
         raise HTTPException(status_code=500, detail=str(e))
@@ -247,8 +418,8 @@ async def add_instcat(item: InstcatCreate):
         await conn.close()
 
 
-@app.post("/add_instfam", dependencies=[Depends(verify_admin)])
-async def add_instcat(item: InstfamCreate):
+@app.post("/family", dependencies=[Depends(verify_admin)], response_model=FamilyCreateResponse)
+async def add_instcat(item: FamilyCreate):
     conn = await get_db_connection()
     try:
         # Insert the new item into the items table
@@ -259,14 +430,17 @@ async def add_instcat(item: InstfamCreate):
             item.image,
             item.cat_id
         )
-        return {"message": "Item added successfully"}
+
+        return FamilyCreateResponse(
+            message="Item added successfully"
+        )
     except Exception as e:
         print("h")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await conn.close()
 
-@app.post("/add_instrument", dependencies=[Depends(verify_admin)])
+@app.post("/instrument", dependencies=[Depends(verify_admin)], response_model=InstrumentCreateResponse)
 async def add_course(item: InstrumentCreate):
     conn = await get_db_connection()
     try:
@@ -278,14 +452,16 @@ async def add_course(item: InstrumentCreate):
             item.image,
             item.fam_id
         )
-        return {"message": "instrument added successfully"}
+        return InstrumentCreateResponse(
+            message="instrument added successfully"
+        )
     except Exception as e:
         print("h")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await conn.close()
 
-@app.post("/add_course", dependencies=[Depends(verify_admin)])
+@app.post("/course", dependencies=[Depends(verify_admin)], response_model=CourseCreateResponse)
 async def add_course(item: CourseCreate):
     conn = await get_db_connection()
     try:
@@ -298,17 +474,62 @@ async def add_course(item: CourseCreate):
             item.fam_id,
             item.inst_id
         )
-        return {"message": "course added successfully"}
+        return CourseCreateResponse(
+            message="course added successfully"
+        )
     except Exception as e:
-        print("h")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await conn.close()
 
 
+@app.post("/class", dependencies=[Depends(verify_admin)], response_model=ClassCreateResponse)
+async def add_class(item: ClassCreate):
+    conn = await get_db_connection()
+    try:
+        # Insert the new item into the items table
+        await conn.execute(
+            "INSERT INTO classes (description,price,course_id,teacher_id) VALUES ($1, $2,$3,$4)",
+            item.desc,
+            item.price,
+            item.course_id,
+            item.teacher_id
+        )
+        return ClassCreateResponse(
+            message="class added successfully"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await conn.close()
 
 
-def get_jalili(time,day,week_delta):
+@app.post("/teacher", dependencies=[Depends(verify_admin)], response_model=TeacherCreateResponse)
+async def add_teacher(user: TeacherCreate):
+    conn = await get_db_connection()
+    try:
+        # Check if the username already exists
+        existing_user = await conn.fetchrow("SELECT * FROM users WHERE username = $1", user.username)
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Username already exists")
+
+        # Hash the password before storing it
+        hashed_password = hash_password(user.password)
+
+        # Insert the new user into the database
+        await conn.execute("INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3)",
+                           user.username, hashed_password, "teacher")
+
+        return TeacherCreateResponse(
+            message="teacher added successfully"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await conn.close()
+
+
+def get_jalali(time,day,week_delta):
     # Get today's time, like give me the timestamp of today when the clock is 13:44
     now = datetime.now()
     today_time = now.replace(hour=int(time.split(':')[0]), minute=int(time.split(':')[1]), second=0, microsecond=0)
@@ -329,11 +550,11 @@ def get_jalili(time,day,week_delta):
     formatted_jalali_date = f"{jalali_date.year}/{jalali_date.month:02}/{jalali_date.day:02}"
     return {"date":formatted_jalali_date,"date_at":final_timestamp}
 
-@app.post("/add_session", dependencies=[Depends(verify_admin)])
+@app.post("/session", dependencies=[Depends(verify_admin)], response_model=SessionCreateResponse)
 async def add_session(item: SessionCreate):
     conn = await get_db_connection()
     try:
-        date = get_jalili(item.time,item.day,item.week_delta) 
+        date = get_jalali(item.time,item.day,item.week_delta) 
         # Insert the new item into the items table
         await conn.execute(
             "INSERT INTO classe_sessions (enroll_id,date,date_at,is_deleted) VALUES ($1, $2,$3,$4)",
@@ -342,52 +563,14 @@ async def add_session(item: SessionCreate):
             date_at,
             False
         )
-        return {"message": "session added successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        await conn.close()
-
-@app.post("/add_class", dependencies=[Depends(verify_admin)])
-async def add_class(item: ClassCreate):
-    conn = await get_db_connection()
-    try:
-        # Insert the new item into the items table
-        await conn.execute(
-            "INSERT INTO classes (description,price,course_id,teacher_id) VALUES ($1, $2,$3,$4)",
-            item.desc,
-            item.price,
-            item.course_id,
-            item.teacher_id
+        return TeacherCreateResponse(
+            message="session added successfully"
         )
-        return {"message": "class added successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await conn.close()
 
-
-@app.post("/add_teacher", dependencies=[Depends(verify_admin)])
-async def add_teacher(user: User):
-    conn = await get_db_connection()
-    try:
-        # Check if the username already exists
-        existing_user = await conn.fetchrow("SELECT * FROM users WHERE username = $1", user.username)
-        if existing_user:
-            raise HTTPException(status_code=400, detail="Username already exists")
-
-        # Hash the password before storing it
-        hashed_password = hash_password(user.password)
-
-        # Insert the new user into the database
-        await conn.execute("INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3)",
-                           user.username, hashed_password, "teacher")
-
-        return {"message": "User created successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        await conn.close()
 
 
 
@@ -396,7 +579,7 @@ async def add_teacher(user: User):
 
 
 # Signup route
-@app.post("/add_enroll", dependencies=[Depends(verify_admin)])
+@app.post("/add_enroll", dependencies=[Depends(verify_admin)], response_model=AddEnrollResponse)
 async def add_enroll(item: EnrollCreate):
     conn = await get_db_connection()
     username=item.ssn
@@ -438,7 +621,9 @@ async def add_enroll(item: EnrollCreate):
             0
         )
 
-        return {"message": "enroll added successfully"}
+        return AddEnrollResponse(
+            message="enroll added successfully"
+        )
     except Exception as e:
         raise HTTPException(status_code=500,  detail=str(e))
     finally:
@@ -449,99 +634,103 @@ async def add_enroll(item: EnrollCreate):
 ###GENERAL###
 
  
-@app.get("/get_instcat")
-async def get_items(request: Request):
+@app.get("/categories", response_model=List[Category])
+async def get_instcategories():
     conn = await get_db_connection()
     try:
-        # Fetch all items from the items table
         items = await conn.fetch("SELECT * FROM public.instcategories")
-        return {"items": [dict(item) for item in items]}
+        return [Category(**dict(item)) for item in items]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await conn.close()
 
-@app.get("/instfams")
-async def get_items(request: Request):
+@app.get("/families", response_model=List[Family])
+async def get_items():
     conn = await get_db_connection()
     try:
         # Fetch all items from the items table
         items = await conn.fetch("SELECT * FROM instfamilies")
-        return {"instfams": [dict(item) for item in items]}
+        return [Family(**dict(item)) for item in items]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await conn.close()
 
 
-        
-@app.get("/instfam")
-async def get_items(fam_id: int, request: Request):
-    conn = await get_db_connection()
+
+@app.get("/family/{fam_id}", response_model=GetFamilyResponse)
+async def get_items(fam_id:int):
+    conn = await get_db_connection
     try:
         # Fetch all items from the courses table
         items = await conn.fetch("SELECT * FROM courses WHERE family_id = $1", fam_id)
         
         # Fetch the description from the instfamilies table
-        description = await conn.fetchrow("SELECT description FROM instfamilies WHERE id = $1", fam_id)
+        family = await conn.fetchrow("SELECT title,description FROM instfamilies WHERE id = $1",fam_id)
 
-        return {
-            "courses": [dict(item) for item in items],
-            "description": description["description"] if description else None
-        }
+        return GetFamilyResponse(
+            courses=[Course(**dict(item)) for item in items],
+            title=family["title"] if family else None,
+            description=family["description"] if family else None
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await conn.close()
 
 
-@app.get("/course")
-async def get_items(course_id: int, request: Request):
+
+@app.get("/course", response_model=CourseResponse)
+async def get_items(course_id: int):  # Directly use course_id as a parameter
     conn = await get_db_connection()
     try:
+        # Fetch course details
         course = await conn.fetchrow("SELECT * FROM courses WHERE id = $1", course_id)
+        if not course:
+            raise HTTPException(status_code=404, detail="Course not found")
+
+        instrument = await conn.fetchrow("SELECT * FROM instruments WHERE id = $1", course["instrument_id"])
         classes = await conn.fetch("SELECT * FROM classes WHERE course_id = $1", course_id)
-        #classes has a teacher_id column based on it we want to find teachers info in users table
+        
         class_list = []
         for class_ in classes:
-          teacher = await conn.fetchrow("SELECT id , firstname, lastname , bio, image FROM users WHERE id = $1", class_["teacher_id"])
-          class_list.append({"class_":class_,"teacher":teacher})
-        return {
-            "classes": [dict(item) for item in class_list],
-            "course": course
-        }
+            teacher = await conn.fetchrow("SELECT id, firstname, lastname, bio, image FROM users WHERE id = $1", class_["teacher_id"])
+            class_list.append(ClassDetail(
+                class_=Class(**dict(class_)), 
+                teacher=Teacher(**dict(teacher)) if teacher else None
+            ))
+
+        return CourseResponse(
+            classes=class_list,
+            course=Course(**dict(course)) if course else None,
+            instrument=Instrument(**dict(instrument)) if instrument else None
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await conn.close()
 
-
-@app.get("/sched")
-async def get_items(teacher_id: int, request: Request):
+@app.get("/general-schedules/{teacher_id}", response_model=GeneralSchedulesResponse)
+async def get_items(teacher_id: int):
     conn = await get_db_connection()
     try:
-        scheds = await conn.fetch("SELECT * FROM teacher_schedules WHERE teacher_id = $1", teacher_id)
-        # classes = await conn.fetch("SELECT * FROM classes WHERE teacher_id = $1", teacher_id)
-        # class_list = []
-        # for class_ in classes:
-        #   enrolls = await conn.fetch("SELECT time , day FROM enrolls WHERE class_id = $1",  class_["id"])
-        #   class_list.extend(enrolls)
-        class_list = await conn.fetch("SELECT enrolls.time , enrolls.day FROM enrolls INNER JOIN classes ON enrolls.class_id = classes.id WHERE classes.teacher_id = $1", teacher_id)
+        scheds = await conn.fetch("SELECT time,day FROM teacher_schedules WHERE teacher_id = $1", teacher_id)
+        class_list = await conn.fetch("SELECT enrolls.time, enrolls.day FROM enrolls INNER JOIN classes ON enrolls.class_id = classes.id WHERE classes.teacher_id = $1", teacher_id)
 
-        return {
-            "classes": [dict(item) for item in class_list],
-            "busy": [dict(item) for item in scheds]
-        }
+        return GeneralSchedulesResponse(
+            classes=[EnrollmentTime(**dict(item)) for item in class_list],
+            busy=[Schedule(**dict(item)) for item in scheds]
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await conn.close()
 
-
 # Login route with rate limiting
-@app.post("/login")
+@app.post("/login", response_model=UserLoginResponse)
 @limiter.limit("5/minute")  # Limit to 5 login attempts per minute
-async def login(request: Request, user: UserLogin):  # Add request parameter
+async def login(request: Request,user: UserLogin):  # Add request parameter
     conn = await get_db_connection()
     try:
         # Fetch the user from the database
@@ -559,7 +748,11 @@ async def login(request: Request, user: UserLogin):  # Add request parameter
         # token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
         token = generate_jwt(existing_user['id'],existing_user['role'],4)
 
-        return {"message": "Login successful", "token": token}
+
+        return UserLoginResponse(
+            message="Login successful",
+            token=token
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -585,7 +778,7 @@ def create_pay_url(token:str):
     url = "google.com/"+token
     return url
 
-@app.post("/enroll")
+@app.post("/enroll", response_model=EnrollResponse)
 async def submit_enroll(item: EnrollCreate):
     conn = await get_db_connection()
     username=item.ssn
@@ -631,7 +824,11 @@ async def submit_enroll(item: EnrollCreate):
             datetime.utcnow(),
             False
         )
-        return {"message": "enrolled successfully","url": url}
+
+        return EnrollResponse(
+            message="enrolled successfully",
+            url=url
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -641,7 +838,7 @@ async def submit_enroll(item: EnrollCreate):
 def varify_request(token, amount):
   return True
 
-@app.get("/varify_payment")
+@app.get("/varify_payment", response_model=VarifyPaymentResponse)
 async def varify_payment(token: str , amount: int ):
     conn = await get_db_connection()
     try:
@@ -671,8 +868,9 @@ async def varify_payment(token: str , amount: int ):
             pay_request["id"]
         )
 
-        return {"message": "Payment verified successfully."}
-
+        return EnrollResponse(
+            message="Payment verified successfully."
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
@@ -686,8 +884,8 @@ async def varify_payment(token: str , amount: int ):
 
 ###TEACHER###
 
-@app.put("/teacher_sched", dependencies=[Depends(verify_jwt)])
-async def update_sched(body: UpdateSched,user: dict = Depends(verify_jwt)):
+@app.put("/schedules", dependencies=[Depends(verify_jwt)], response_model=UpdateSchedulesResponse)
+async def update_sched(body: UpdateSchedules,user: dict = Depends(verify_jwt)):
     if user["role"]=="admin":
         pass
     elif user["role"]=="teacher":
@@ -718,14 +916,17 @@ async def update_sched(body: UpdateSched,user: dict = Depends(verify_jwt)):
         WHERE teacher_id = $1 AND day = $2 AND time = $3
     """,  body.teacher_id, item.day, item.time)
 
-        return {"message": "sched updated successfully"}
+        return UpdateSchedulesResponse(
+            message="schedules updated successfully"
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await conn.close()
 
-@app.get("/teacher_sched", dependencies=[Depends(verify_jwt)])
+@app.get("/schedules/{teacher_id}", dependencies=[Depends(verify_jwt)], response_model=GetSchedulesResponse)
 async def get_items(teacher_id: int,user: dict = Depends(verify_jwt)):
+    print(user)
     if user["role"]=="admin":
         pass
     elif user["role"]=="teacher":
@@ -739,13 +940,14 @@ async def get_items(teacher_id: int,user: dict = Depends(verify_jwt)):
     
     conn = await get_db_connection()
     try:
-        scheds = await conn.fetch("SELECT * FROM teacher_schedules WHERE teacher_id = $1", teacher_id)
+        scheds = await conn.fetch("SELECT day,time FROM teacher_schedules WHERE teacher_id = $1", teacher_id)
         # enroll_list = await conn.fetch("SELECT enrolls.time , enrolls.day FROM enrolls INNER JOIN classes ON enrolls.class_id = classes.id WHERE classes.teacher_id = $1", teacher_id)
         class_list = await conn.fetch("SELECT enrolls.day,enrolls.time, users.lastname,courses.title FROM enrolls INNER JOIN classes ON enrolls.class_id = classes.id INNER JOIN users ON enrolls.student_id = users.id INNER JOIN courses ON classes.course_id = courses.id WHERE classes.teacher_id = $1;", teacher_id)
-        return {
-            "classes": [dict(item) for item in class_list],
-            "busy": [dict(item) for item in scheds]
-        }
+        print(class_list)
+        return GetSchedulesResponse(
+            classes=[dict(item) for item in class_list],
+            busy=[dict(item) for item in scheds]
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -789,7 +991,7 @@ async def read_root():
 async def read_items():
     return [{"item": "item1"}, {"item": "item2"}]
 
-@app.post("/fu")
+@app.post("/u")
 async def add_class():
     conn = await get_db_connection()
     try:
