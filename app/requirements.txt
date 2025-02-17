@@ -1,0 +1,6 @@
+fastapi
+asyncpg
+python-jose
+slowapi
+passlib
+pydantic
