@@ -233,11 +233,11 @@ class EnrollResponse(BaseModel):
     message: str
     url: str
 
-class VarifyPayment(BaseModel):
+class verifyPayment(BaseModel):
     token:str
     amount:int 
 
-class VarifyPaymentResponse(BaseModel):
+class verifyPaymentResponse(BaseModel):
     message: str
 
 
@@ -778,11 +778,11 @@ async def submit_enroll(item: EnrollCreate):
         await conn.close()
 
 
-def varify_request(token, amount):
+def verify_request(token, amount):
   return True
 
-@app.get("/varify_payment", response_model=VarifyPaymentResponse)
-async def varify_payment(token: str , amount: int ):
+@app.get("/verify_payment", response_model=verifyPaymentResponse)
+async def verify_payment(token: str , amount: int ):
     conn = await get_db_connection()
     try:
         pay_request = await conn.fetchrow("SELECT * FROM pay_tokens WHERE token = $1", token)
@@ -792,7 +792,7 @@ async def varify_payment(token: str , amount: int ):
             raise HTTPException(status_code=400, detail="Invalid or expired token.")
 
         # Verify the payment
-        answer = varify_request(token=token, amount=amount)
+        answer = verify_request(token=token, amount=amount)
         
         # Check if the payment was successful
         if not answer:
