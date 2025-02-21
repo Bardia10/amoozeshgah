@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, Request, Header,APIRouter
 from app.models.general_info import Category,Family,GetFamilyResponse,Course,CourseResponse,Teacher,Class,ClassDetail,CourseResponse,Instrument,EnrollmentTime,Schedule,GeneralSchedulesResponse
-from app.dependencies.db_dependencies import get_db
+from app.database.db_dependencies import get_db
 from typing import Optional,List
 
 router = APIRouter()

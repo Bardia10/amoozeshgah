@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from app.controllers.general_info_controller import router as item_router
-# from app.database import setup_database
-
+#uvicorn main:app --reload
 app = FastAPI()
 
 # Setup database connection
