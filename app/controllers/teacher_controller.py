@@ -14,7 +14,7 @@ async def update_sched(body: UpdateSchedules,user: dict = Depends(verify_jwt),db
     if user["role"]=="admin":
         pass
     elif user["role"]=="teacher":
-        if user["sub"] == body.teacher_id:
+        if user["id"] == body.teacher_id:
             pass
         else:
             raise HTTPException(status_code=403, detail="Not enough permissions")
