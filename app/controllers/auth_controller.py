@@ -19,7 +19,12 @@ async def login(request: Request,user: UserLogin,db=Depends(get_db)):
 
 
         token = generate_jwt(existing_user['id'],existing_user['role'],4)
-
+        
+        await db.execute(
+            "INSERT INTO tokens (user_id, token) VALUES ($1, $2)",
+            existing_user['id'],
+            token
+        )
 
         return UserLoginResponse(
             message="Login successful",
