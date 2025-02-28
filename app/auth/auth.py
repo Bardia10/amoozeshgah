@@ -5,10 +5,19 @@ from fastapi import HTTPException, Header
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from app.dependencies.db_dependencies import get_db
+from app.models.tables import Token
+from app.repositories.token import TokenRepository 
+from app.repositories.user import UserRepository 
+
 
 # AUTH CONFIGURATION
 SECRET_KEY = "kilideserry"  # Replace with your actual secret key
 ALGORITHM = "HS256"
+
+
+user_repo = UserRepository()
+token_repo = TokenRepository()
+
 
 # Password context
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto", pbkdf2_sha256__rounds=200000)
@@ -34,7 +43,8 @@ async def verify_jwt(authorization: str = Header(...), db=Depends(get_db)):
     # except JWTError as e:  # Capture the JWTError as 'e'
     #     raise HTTPException(status_code=401, detail=f"Invalid token or token has expired: {str(e)}") 
 
-    token_entry = await db.fetchrow("SELECT user_id FROM tokens WHERE token = $1", token)
+    # token_entry = await db.fetchrow("SELECT user_id FROM tokens WHERE token = $1", token)
+    token_entry = await token_repo.get_by_column(db, "token",token)
     
     if token_entry is None:
         raise HTTPException(
@@ -42,16 +52,25 @@ async def verify_jwt(authorization: str = Header(...), db=Depends(get_db)):
             detail="Invalid token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    user = await db.fetchrow("SELECT id,role FROM users WHERE id = $1", token_entry["user_id"])
+    # user = await db.fetchrow("SELECT id,role FROM users WHERE id = $1", token_entry["user_id"])
+    user = await user_repo.get_by_id(db, token_entry["user_id"])
     
     return user
 
 # Function to generate JWT
-def generate_jwt(sub, role, days):
+def generate_jwt(sub, role):
+    created_at = datetime.utcnow()
+    expired_at = created_at + timedelta(days=4)
     payload = {
         "sub": str(sub),
         "role": role,
-        "exp": datetime.utcnow() + timedelta(days=days)  # Token expires in specified days
+        "exp": expired_at  # Token expires in specified days
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-    return token
+
+    return Token(
+        user_id=sub,
+        token=token,
+        created_at=created_at,
+        expires_at=expired_at
+    )
