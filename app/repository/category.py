@@ -1,5 +1,5 @@
 from app.models.category import Category
-from app.repositories.common import CommonRepository 
+from app.repository.common import CommonRepository 
 from fastapi import Depends
 
 

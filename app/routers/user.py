@@ -1,8 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
-from app.models.user import User,GetUsersResponse,GetUserResponse,PostUserResponse,DeleteUserResponse
-from app.repositories.user import UserRepository as ItemRepository
-from app.dependencies.db_dependencies import get_db
-from app.dependencies.auth_dependencies import verify_admin
+from app.models.user import User
+from app.schemas.user import UserCreate,GetUsersResponse,GetUserResponse,PostUserResponse,DeleteUserResponse
+
+from app.repository.user import UserRepository as ItemRepository
+from app.dependencies.db import get_db
+from app.dependencies.auth import verify_admin
 
 
 router = APIRouter()
@@ -32,7 +34,7 @@ async def read_item(item_id: int, db=Depends(get_db)):
 
 
 @router.post("/users/",response_model=PostUserResponse)
-async def create_item(item: User, db=Depends(get_db)):
+async def create_item(item: UserCreate, db=Depends(get_db)):
     try:
         response = await item_repo.create(db, item)
         return PostUserResponse(

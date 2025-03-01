@@ -1,5 +1,5 @@
 from app.models.tables import User as Item
-from app.repositories.common import CommonRepository 
+from app.repository.common import CommonRepository 
 from fastapi import Depends
 
 

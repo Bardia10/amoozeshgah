@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.models.category import Category,GetCategoryResponse,GetCategoriesResponse,PostCategoryResponse
-from app.repositories.category_repository import CategoryRepository
-from app.dependencies.db_dependencies import get_db
+from app.repository.category import CategoryRepository
+from app.dependencies.db import get_db
 
 
 router = APIRouter()

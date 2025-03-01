@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Depends, HTTPException, Request, Header,APIRouter
-from app.repositories.user import UserRepository 
-from app.repositories.token import TokenRepository 
+from app.repository.user import UserRepository 
+from app.repository.token import TokenRepository 
 from app.models.auth import UserLoginResponse,UserLogin
-from app.dependencies.db_dependencies import get_db
+from app.dependencies.db import get_db
 from app.dependencies.common import limiter
 from app.auth.auth import hash_password,verify_password,generate_jwt
 from datetime import datetime,timedelta,time, date

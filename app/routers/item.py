@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.models.item import Item,GetItemResponse,GetItemsResponse,PostItemResponse
-from app.repositories.item_repository import ItemRepository
-from app.dependencies.db_dependencies import get_db
+from app.repository.item import ItemRepository
+from app.dependencies.db import get_db
 
 
 router = APIRouter()

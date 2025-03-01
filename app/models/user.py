@@ -1,21 +1,21 @@
 from typing import Optional,List
 from pydantic import BaseModel
-from app.models.tables import User as Item
-
-User = Item
-
-class GetUserResponse(BaseModel):
-    item: Item
 
 
-class GetUsersResponse(BaseModel):
-    items: List[Item]
+class Role(str, Enum):
+    admin = "admin"
+    student = "student"
+    teacher = "teacher"
 
-    
-class PostUserResponse(BaseModel):
-    id : int
-    message: str
-
-class DeleteUserResponse(BaseModel):
-    id : int
-    message: str
+class User(BaseModel):
+    id: int
+    username: str
+    password_hash: str
+    firstname: Optional[str] = None
+    lastname: Optional[str] = None
+    role: Role
+    bio: Optional[str] = None
+    ssn: Optional[str] = None
+    contact: Optional[str] = None
+    image: Optional[str] = None
+    year_born: Optional[int] = None
