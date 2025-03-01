@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.models.user import User
 from app.schemas.user import UserCreate,GetUsersResponse,GetUserResponse,PostUserResponse,DeleteUserResponse
-
 from app.repository.user import UserRepository as ItemRepository
 from app.dependencies.db import get_db
 from app.dependencies.auth import verify_admin
@@ -10,7 +9,7 @@ from app.dependencies.auth import verify_admin
 router = APIRouter()
 item_repo = ItemRepository()
 
-@router.get("/users/" ,response_model=GetUsersResponse, dependencies=[Depends(verify_admin)])
+@router.get("/users" ,response_model=GetUsersResponse, dependencies=[Depends(verify_admin)])
 async def read_items(db=Depends(get_db)):
     try:
         records = await item_repo.get_all(db)
@@ -20,7 +19,7 @@ async def read_items(db=Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))    
 
-@router.get("/users/{item_id}",response_model=GetUserResponse)
+@router.get("/users/{item_id}",response_model=GetUserResponse, dependencies=[Depends(verify_admin)])
 async def read_item(item_id: int, db=Depends(get_db)):
     try:
         record = await item_repo.get_by_id(db, item_id)
@@ -33,7 +32,7 @@ async def read_item(item_id: int, db=Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))    
 
 
-@router.post("/users/",response_model=PostUserResponse)
+@router.post("/users",response_model=PostUserResponse, dependencies=[Depends(verify_admin)])
 async def create_item(item: UserCreate, db=Depends(get_db)):
     try:
         response = await item_repo.create(db, item)
@@ -44,7 +43,7 @@ async def create_item(item: UserCreate, db=Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))    
 
-@router.delete("/users/{item_id}/", response_model=DeleteUserResponse)
+@router.delete("/users/{item_id}", response_model=DeleteUserResponse, dependencies=[Depends(verify_admin)])
 async def delete_item(item_id: int, db= Depends(get_db)):
     try:
         # Call the delete method from the repository

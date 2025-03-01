@@ -1,4 +1,4 @@
-from app.models.tables import User as Item
+from app.models.token import Token as Item
 from app.repository.common import CommonRepository 
 from fastapi import Depends
 

@@ -1,56 +1,55 @@
 from fastapi import APIRouter, HTTPException, Depends
-from app.models.category import Category
-from app.schemas.category import CategoryCreate,GetCategoryResponse,GetCategoriesResponse,PostCategoryResponse,DeleteCategoryResponse
-from app.repository.category import CategoryRepository as ItemRepository
+from app.schemas.family import FamilyCreate,GetFamiliesResponse,GetFamilyResponse,PostFamilyResponse,DeleteFamilyResponse
+from app.repository.family import CategoryRepository as ItemRepository
 from app.dependencies.db import get_db
 from app.dependencies.auth import verify_admin
 
 
-router = APIRouter(prefix="/categories")
+router = APIRouter(prefix="/families")
 item_repo = ItemRepository()
 
-@router.get("/" ,response_model=GetCategoriesResponse)
+@router.get("/" ,response_model=GetFamiliesResponse)
 async def read_items(db=Depends(get_db)):
     try:
         records = await item_repo.get_all(db)
-        return GetCategoriesResponse(
+        return GetFamiliesResponse(
                 items=[dict(record.items()) for record in records]
             )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))    
 
-@router.get("/{item_id}",response_model=GetCategoryResponse)
+@router.get("/{item_id}",response_model=GetFamilyResponse)
 async def read_item(item_id: int, db=Depends(get_db)):
     try:
         record = await item_repo.get_by_id(db, item_id)
         if not record:
             raise HTTPException(status_code=404, detail="Item not found")
-        return GetCategoryResponse(
+        return GetFamilyResponse(
                 item= dict(record.items())
             )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))    
 
 
-@router.post("/",response_model=PostCategoryResponse, dependencies=[Depends(verify_admin)])
-async def create_item(item: CategoryCreate, db=Depends(get_db)):
+@router.post("/",response_model=PostFamilyResponse, dependencies=[Depends(verify_admin)])
+async def create_item(item: FamilyCreate, db=Depends(get_db)):
     try:
         response = await item_repo.create(db, item)
-        return PostCategoryResponse(
+        return PostFamilyResponse(
                 id=response.id,
                 message="item added successfully"
             )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))    
 
-@router.delete("/{item_id}", response_model=DeleteCategoryResponse, dependencies=[Depends(verify_admin)])
+@router.delete("/{item_id}", response_model=DeleteFamilyResponse, dependencies=[Depends(verify_admin)])
 async def delete_item(item_id: int, db= Depends(get_db)):
     try:
         # Call the delete method from the repository
         result = await item_repo.delete_by_id(db, item_id)
 
         if result:
-            return DeleteCategoryResponse(
+            return DeleteFamilyResponse(
                 id=item_id,
                 message="Item deleted successfully"
             )

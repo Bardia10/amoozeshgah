@@ -4,8 +4,9 @@ from enum import Enum
 from datetime import datetime
 
 
-class Category(BaseModel):
+class Family(BaseModel):
     id: int  
     title: str 
     description: Optional[str] 
     image: Optional[str]
+    category_id: int 

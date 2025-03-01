@@ -1,6 +1,6 @@
 from typing import Optional,List
 from pydantic import BaseModel
-from app.models.tables import User as Item
+from app.models.user import User as Item
 
 class UserCreate(Item):
     id: Optional[int] = None 

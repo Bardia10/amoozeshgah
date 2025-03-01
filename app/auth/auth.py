@@ -4,7 +4,7 @@ from fastapi import HTTPException, Header
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from app.dependencies.db import get_db
-from app.models.tables import Token
+from app.models.token import Token
 
 
 # AUTH CONFIGURATION

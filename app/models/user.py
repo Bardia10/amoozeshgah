@@ -1,5 +1,6 @@
 from typing import Optional,List
 from pydantic import BaseModel
+from enum import Enum
 
 
 class Role(str, Enum):

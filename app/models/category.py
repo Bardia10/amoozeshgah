@@ -1,20 +1,13 @@
+from pydantic import BaseModel, constr, conint, Field
 from typing import Optional,List
-from pydantic import BaseModel
+from enum import Enum
+from datetime import datetime
+
 
 class Category(BaseModel):
-    id: int
-    title: str
-    description: str = None
-    image: str = None
-
-class GetCategoryResponse(BaseModel):
-    item: Category
+    id: int  
+    title: str 
+    description: Optional[str] 
+    image: Optional[str]
 
 
-class GetCategoriesResponse(BaseModel):
-    items: List[Category]
-
-    
-class PostCategoryResponse(BaseModel):
-    id : int
-    message: str
