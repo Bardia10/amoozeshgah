@@ -9,11 +9,11 @@ token_repo = TokenRepository()
 
 
 # Function to verify JWT
-async def verify_jwt(authorization: str = Header(...), db=Depends(get_db)):
-    if authorization is None:
+async def verify_jwt(auth_token: str = Header(...), db=Depends(get_db)):
+    if auth_token is None:
         raise HTTPException(status_code=401, detail="Authorization header missing")
 
-    token = authorization.split(" ")[1] if " " in authorization else authorization
+    token = auth_token.split(" ")[1] if " " in auth_token else auth_token
     
     # try:
     #     payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
