@@ -1,5 +1,5 @@
 from app.schemas.user import UserCreate as Item
-from app.repository.common import CommonRepository 
+from app.repository.common2 import CommonRepository 
 from fastapi import Depends
 
 

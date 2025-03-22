@@ -1,5 +1,5 @@
 from app.models.token import Token as Item
-from app.repository.common import CommonRepository 
+from app.repository.common2 import CommonRepository 
 from fastapi import Depends
 
 
