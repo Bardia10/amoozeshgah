@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, Depends
-from app.models.category import Category
 from app.schemas.category import (
     CategoryCreate,
     GetCategoryResponse,

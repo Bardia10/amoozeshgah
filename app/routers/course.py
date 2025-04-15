@@ -1,32 +1,32 @@
 from fastapi import APIRouter, HTTPException, Depends
-from app.schemas.user import (
-    UserCreate,
-    GetUsersResponse,
-    GetUserResponse,
-    PostUserResponse,
-    DeleteUserResponse,
+from app.schemas.course import (
+    CourseCreate,
+    GetCoursesResponse,
+    GetCourseResponse,
+    PostCourseResponse,
+    DeleteCourseResponse,
 )
-from app.repository.user import UserRepository as ItemRepository
+from app.repository.course import CourseRepository as ItemRepository
 from app.dependencies.db import get_db
 from app.dependencies.auth import verify_admin
 
-# Define the prefix for all routes
-router = APIRouter(prefix="/users", dependencies=[Depends(verify_admin)])
 
-@router.get("/", response_model=GetUsersResponse)
+router = APIRouter(prefix="/courses")
+
+@router.get("/", response_model=GetCoursesResponse)
 async def read_items(db=Depends(get_db)):
     try:
         # Instantiate the repository with the connection
         item_repo = ItemRepository(db)
         records = await item_repo.get_all()
-        return GetUsersResponse(
+        return GetCoursesResponse(
             items=[dict(record.items()) for record in records]
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{item_id}", response_model=GetUserResponse)
+@router.get("/{item_id}", response_model=GetCourseResponse)
 async def read_item(item_id: int, db=Depends(get_db)):
     try:
         # Instantiate the repository with the connection
@@ -34,26 +34,26 @@ async def read_item(item_id: int, db=Depends(get_db)):
         record = await item_repo.get_by_id(item_id)
         if not record:
             raise HTTPException(status_code=404, detail="Item not found")
-        return GetUserResponse(item=dict(record.items()))
+        return GetCourseResponse(item=dict(record.items()))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/", response_model=PostUserResponse)
-async def create_item(item: UserCreate, db=Depends(get_db)):
+@router.post("/", response_model=PostCourseResponse, dependencies=[Depends(verify_admin)])
+async def create_item(item: CourseCreate, db=Depends(get_db)):
     try:
         # Instantiate the repository with the connection
         item_repo = ItemRepository(db)
         response = await item_repo.create(item)
-        return PostUserResponse(
+        return PostCourseResponse(
             id=response.id,
-            message="item added successfully"
+            message="Item added successfully"
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/{item_id}", response_model=DeleteUserResponse)
+@router.delete("/{item_id}", response_model=DeleteCourseResponse, dependencies=[Depends(verify_admin)])
 async def delete_item(item_id: int, db=Depends(get_db)):
     try:
         # Instantiate the repository with the connection
@@ -61,7 +61,7 @@ async def delete_item(item_id: int, db=Depends(get_db)):
         result = await item_repo.delete_by_id(item_id)
 
         if result:
-            return DeleteUserResponse(
+            return DeleteCourseResponse(
                 id=item_id,
                 message="Item deleted successfully"
             )
