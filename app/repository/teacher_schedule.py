@@ -10,5 +10,10 @@ class TeacherScheduleRepository(CommonRepository):
 
     async def get_by_teacher(self, item_id: int):
         query = f"SELECT * FROM {self.table_name} WHERE teacher_id = $1"
-        return await self.connection.fetchrow(query, item_id)
+        return await self.connection.fetch(query, item_id)
+
+    async def get_public_by_teacher(self, item_id: int):
+        query = f"SELECT day,time FROM {self.table_name} WHERE teacher_id = $1"
+        return await self.connection.fetch(query, item_id)
+
 
