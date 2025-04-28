@@ -36,6 +36,22 @@ def verify_admin(user: dict = Depends(verify_jwt)):
         raise HTTPException(status_code=403, detail="Not enough permissions")
     return user
 
+
+# Dependency to check if user is an admin or is asking for themself
+def verify_admin_self(user_id,user: dict = Depends(verify_jwt)):
+    print(user)
+    if user["role"]=="admin":
+        pass
+    elif user["role"]=="teacher":
+        if user["id"] == user_id:
+            pass
+        else:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+    else:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    return user
+
+
 # Dependency to check if user is a student
 def verify_student(user: dict = Depends(verify_jwt)):
     if user.get("role") != "student":
