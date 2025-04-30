@@ -6,7 +6,7 @@ from app.schemas.teacher_schedule import (
 from app.repository.teacher_schedule import TeacherScheduleRepository 
 from app.repository.enroll import EnrollRepository 
 from app.dependencies.db import get_db
-from app.dependencies.auth import verify_admin, verify_admin_self
+from app.dependencies.auth import verify_admin, verify_admin_self, verify_jwt
 
 
 router = APIRouter(prefix="/teacher_schedules")
@@ -27,8 +27,18 @@ async def read_items(teacher_id: int, db=Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{teacher_id}", response_model=GetTeacherSchedulesResponse, dependencies=[Depends(verify_admin_self(user_id=teacher_id))])
-async def read_items(teacher_id: int, db=Depends(get_db)):
+def verify_admin_self_dependency(
+    teacher_id: int, user: dict = Depends(verify_jwt)  # Ensure `verify_jwt` is executed and returns the user object
+):
+    # Pass the resolved `user` object to `verify_admin_self`
+    return verify_admin_self(user_id=teacher_id, user=user)
+
+@router.get("/{teacher_id}", response_model=GetTeacherSchedulesResponse)
+async def read_items(
+    teacher_id: int,  # This is the path parameter
+    db=Depends(get_db),
+    user=Depends(verify_admin_self_dependency),  # Depends will automatically pass teacher_id
+):
     try:
         # Instantiate the repository with the connection
         teacher_schedule_repo = TeacherScheduleRepository(db)
