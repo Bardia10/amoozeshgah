@@ -5,11 +5,12 @@ from passlib.context import CryptContext
 from jose import jwt, JWTError
 from app.dependencies.db import get_db
 from app.models.token import Token
+from config.settings import settings
 
 
 # AUTH CONFIGURATION
-SECRET_KEY = "kilideserry"  # Replace with your actual secret key
-ALGORITHM = "HS256"
+SECRET_KEY = settings.jwt_secret_key
+ALGORITHM = settings.hash_algorithm
 
 
 

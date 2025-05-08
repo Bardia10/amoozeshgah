@@ -5,7 +5,7 @@ from app.models.teacher_schedule import TeacherSchedule
 
 
 class DayTime(BaseModel):
-    day: str
+    day: int
     time: time
 
 class GetPublicTeacherSchedulesResponse(BaseModel):
@@ -13,8 +13,8 @@ class GetPublicTeacherSchedulesResponse(BaseModel):
 
 
 class ClassEnrollment(BaseModel):
-    time: str
-    day: str  
+    time: time
+    day: int  
     lastname: str  
     title: str    
 

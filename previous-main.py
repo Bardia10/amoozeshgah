@@ -500,7 +500,7 @@ async def add_session(item: SessionCreate):
         date = get_jalali(item.time,item.day,item.week_delta) 
         # Insert the new item into the items table
         await conn.execute(
-            "INSERT INTO classe_sessions (enroll_id,date,date_at,is_deleted) VALUES ($1, $2,$3,$4)",
+            "INSERT INTO classe_sessions (enroll_id,jalili_date,date,is_deleted) VALUES ($1, $2,$3,$4)",
             item.enroll_id,
             date,
             date_at,
@@ -702,7 +702,7 @@ async def login(request: Request,user: UserLogin):  # Add request parameter
         await conn.close()
 
 
-
+###########################################################
 
 ###STUDENT###
 
@@ -822,7 +822,7 @@ async def verify_payment(token: str , amount: int ):
 
 
 
-
+######################################################
 
 
 ###TEACHER###
@@ -884,7 +884,7 @@ async def get_items(teacher_id: int,user: dict = Depends(verify_jwt)):
     conn = await get_db_connection()
     try:
         scheds = await conn.fetch("SELECT day,time FROM teacher_schedules WHERE teacher_id = $1", teacher_id)
-        # enroll_list = await conn.fetch("SELECT enrolls.time , enrolls.day FROM enrolls INNER JOIN classes ON enrolls.class_id = classes.id WHERE classes.teacher_id = $1", teacher_id)
+
         class_list = await conn.fetch("SELECT enrolls.day,enrolls.time, users.lastname,courses.title FROM enrolls INNER JOIN classes ON enrolls.class_id = classes.id INNER JOIN users ON enrolls.student_id = users.id INNER JOIN courses ON classes.course_id = courses.id WHERE classes.teacher_id = $1;", teacher_id)
         print(class_list)
         return GetSchedulesResponse(

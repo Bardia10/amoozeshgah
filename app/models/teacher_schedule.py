@@ -5,7 +5,7 @@ from datetime import datetime,time
 
 class TeacherSchedule(BaseModel):
     teacher_id: int
-    day: str
+    day: int
     time: time
 
 
