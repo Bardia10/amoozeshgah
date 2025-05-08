@@ -10,7 +10,7 @@ class PayTokenRepository(CommonRepository):
         super().__init__(connection, table_name, Item)
 
     async def get_by_token(self, token: str):
-        query = f"SELECT * FROM pay_tokens WHERE token = $1"
+        query = f"SELECT * FROM pay_tokens WHERE token = $1 AND deleted_at IS NULL"
         return await self.connection.fetchrow(query, token)
 
     async def soft_delete(self, id: int):

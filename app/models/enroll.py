@@ -8,9 +8,9 @@ class Enroll(BaseModel):
     id: int  
     student_id: int 
     class_id: int 
-    day: int 
+    day: conint(ge=0, le=6) 
     time: time 
-    status: int 
+    status: conint(ge=0, le=1)
     credit: int 
     credit_spent: int 
     date_at: datetime 

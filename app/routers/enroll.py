@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.schemas.user import UserCreate
 from app.schemas.pay_token import PayTokenCreate
+from app.schemas.payment import PaymentCreate
 from app.schemas.enroll import (
     EnrollCreate,
     EnrollSubmit,
@@ -15,6 +16,7 @@ from app.repository.enroll import EnrollRepository as ItemRepository
 from app.repository.user import UserRepository 
 from app.repository.class_ import ClassRepository 
 from app.repository.pay_token import PayTokenRepository 
+from app.repository.payment import PaymentRepository 
 from app.dependencies.db import get_db
 from app.dependencies.auth import verify_admin
 from app.auth.auth import hash_password
@@ -23,7 +25,7 @@ from datetime import datetime,time,timedelta
 
 router = APIRouter(prefix="/enrolls")
 
-@router.get("/", response_model=GetEnrollsResponse)
+@router.get("/", response_model=GetEnrollsResponse, dependencies=[Depends(verify_admin)])
 async def read_items(db=Depends(get_db)):
     try:
         # Instantiate the repository with the connection
@@ -36,7 +38,7 @@ async def read_items(db=Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{item_id}", response_model=GetEnrollResponse)
+@router.get("/{item_id}", response_model=GetEnrollResponse, dependencies=[Depends(verify_admin)])
 async def read_item(item_id: int, db=Depends(get_db)):
     try:
         # Instantiate the repository with the connection
@@ -125,9 +127,7 @@ async def create_item(item: EnrollSubmit, db=Depends(get_db)):
 async def verify_enroll(token: str , amount: int , db=Depends(get_db)):
     try:
         pay_token_repo = PayTokenRepository(db)
-        print('d')
         pay_request=await pay_token_repo.get_by_token(token)
-        print('y')
         
         # Check if the payment token exists
         if not pay_request:
@@ -136,20 +136,22 @@ async def verify_enroll(token: str , amount: int , db=Depends(get_db)):
 
         # Verify the payment
         answer = verify_payment(token=token, amount=amount)
-        print('t')
         
         # Check if the payment was successful
         if not answer:
             raise HTTPException(status_code=400, detail="Payment has not taken place.")
+        
+        new_payment = PaymentCreate(enroll_id=pay_request['enroll_id'],amount=amount, created_at = datetime.utcnow() )
+        payment_repo = PaymentRepository(db)
+        await payment_repo.create(new_payment)
+        
 
         # Update the enrolls table
         item_repo = ItemRepository(db)
         new_enroll = await item_repo.update_status(id=pay_request['enroll_id'], status=1)
-        print('r')
 
         # Update the pay_tokens table
         await pay_token_repo.soft_delete(pay_request['id'])
-        print('e')
 
         return VerifyEnrollResponse(
             message="Payment verified successfully."
