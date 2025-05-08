@@ -9,6 +9,7 @@ from app.schemas.enroll import (
     PostEnrollResponse,
     SubmitEnrollResponse,
     DeleteEnrollResponse,
+    VerifyEnrollResponse
 )
 from app.repository.enroll import EnrollRepository as ItemRepository
 from app.repository.user import UserRepository 
@@ -117,3 +118,43 @@ async def create_item(item: EnrollSubmit, db=Depends(get_db)):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@router.get("/verify/", response_model=VerifyEnrollResponse)
+async def verify_enroll(token: str , amount: int , db=Depends(get_db)):
+    try:
+        pay_token_repo = PayTokenRepository(db)
+        print('d')
+        pay_request=await pay_token_repo.get_by_token(token)
+        print('y')
+        
+        # Check if the payment token exists
+        if not pay_request:
+            raise HTTPException(status_code=400, detail="Invalid or expired token.")
+        
+
+        # Verify the payment
+        answer = verify_payment(token=token, amount=amount)
+        print('t')
+        
+        # Check if the payment was successful
+        if not answer:
+            raise HTTPException(status_code=400, detail="Payment has not taken place.")
+
+        # Update the enrolls table
+        item_repo = ItemRepository(db)
+        new_enroll = await item_repo.update_status(id=pay_request['enroll_id'], status=1)
+        print('r')
+
+        # Update the pay_tokens table
+        await pay_token_repo.soft_delete(pay_request['id'])
+        print('e')
+
+        return VerifyEnrollResponse(
+            message="Payment verified successfully."
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+  

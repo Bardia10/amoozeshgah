@@ -38,3 +38,7 @@ class SubmitEnrollResponse(BaseModel):
 class DeleteEnrollResponse(BaseModel):
     id : int
     message: str
+
+
+class VerifyEnrollResponse(BaseModel):
+    message: str

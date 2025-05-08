@@ -36,3 +36,9 @@ class EnrollRepository(CommonRepository):
         await self.connection.execute(query, new_spent, id)
 
         return {"id": id, "credit_spent": new_spent}
+
+
+    async def update_status(self, id: int, status:int):
+        # Fetch the current credit_spent value for the given id
+        query = f"UPDATE enrolls SET status = $1 WHERE id = $2"
+        result = await self.connection.execute(query, status,id)
