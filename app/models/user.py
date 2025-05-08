@@ -20,3 +20,5 @@ class User(BaseModel):
     contact: Optional[str] = None
     image: Optional[str] = None
     year_born: Optional[int] = None
+
+

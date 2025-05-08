@@ -52,6 +52,13 @@ def verify_admin_self(user_id,user: dict = Depends(verify_jwt)):
     return user
 
 
+def verify_admin_self_teacher(
+    teacher_id: int, user: dict = Depends(verify_jwt)  # Ensure `verify_jwt` is executed and returns the user object
+):
+    # Pass the resolved `user` object to `verify_admin_self`
+    return verify_admin_self(user_id=teacher_id, user=user)
+
+
 # Dependency to check if user is a student
 def verify_student(user: dict = Depends(verify_jwt)):
     if user.get("role") != "student":

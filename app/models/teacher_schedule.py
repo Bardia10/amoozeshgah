@@ -7,6 +7,5 @@ class TeacherSchedule(BaseModel):
     teacher_id: int
     day: str
     time: time
-    enroll_id: Optional[int]
-    expires_at: datetime
+
 

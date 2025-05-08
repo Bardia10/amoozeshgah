@@ -21,3 +21,15 @@ class ClassEnrollment(BaseModel):
 class GetTeacherSchedulesResponse(BaseModel):
     classes: List[ClassEnrollment]
     busy: List[TeacherSchedule]
+
+
+class CreateTeacherSchedule(TeacherSchedule):
+    class Config:
+        fields = {"id": {"exclude": True}}
+
+class UpdateTeacherSchedules(BaseModel):
+    free: List[CreateTeacherSchedule]
+    busy: List[CreateTeacherSchedule]
+
+class UpdateTeacherSchedulesResponse(BaseModel):
+    message: str

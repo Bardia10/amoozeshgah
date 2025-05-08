@@ -1,16 +1,26 @@
 from typing import Optional,List
 from pydantic import BaseModel
-from app.models.user import User as Item
+from app.models.user import User , Role
 
-class UserCreate(Item):
-    id: Optional[int] = None 
+class UserCreate(BaseModel):
+    username: str
+    password_hash: str
+    firstname: Optional[str] = None
+    lastname: Optional[str] = None
+    role: Role
+    bio: Optional[str] = None
+    ssn: Optional[str] = None
+    contact: Optional[str] = None
+    image: Optional[str] = None
+    year_born: Optional[int] = None
+
 
 class GetUserResponse(BaseModel):
-    item: Item
+    item: User
 
 
 class GetUsersResponse(BaseModel):
-    items: List[Item]
+    items: List[User]
 
     
 class PostUserResponse(BaseModel):

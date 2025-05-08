@@ -1,4 +1,5 @@
-from app.models.user import User as Item
+from app.models.user import User 
+from app.schemas.user import UserCreate 
 from app.repository.common import CommonRepository 
 from fastapi import Depends
 
@@ -6,5 +7,31 @@ table_name="users"
 
 class UserRepository(CommonRepository):
     def __init__(self, connection):
-        super().__init__(connection, table_name, Item)
+        super().__init__(connection, table_name, User)
 
+    async def add_or_update(self, item: UserCreate):
+        query = """
+            INSERT INTO users (username, password_hash, role, firstname, lastname, bio, contact, ssn, year_born)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ON CONFLICT (username) 
+            DO UPDATE SET 
+            firstname = EXCLUDED.firstname,
+            lastname = EXCLUDED.lastname,
+            contact = EXCLUDED.contact,
+            bio = EXCLUDED.bio,
+            year_born = EXCLUDED.year_born,
+            password_hash = EXCLUDED.password_hash
+            RETURNING id
+        """
+        return await self.connection.fetchrow(
+        query,
+        item.username,
+        item.password_hash,
+        item.role,
+        item.firstname,
+        item.lastname,
+        item.bio,
+        item.contact,
+        item.ssn,
+        item.year_born
+    )
