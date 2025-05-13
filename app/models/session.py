@@ -6,7 +6,7 @@ from datetime import datetime,time
 class Session(BaseModel):
     id: Optional[int]= Field(default=None)
     enroll_id: int
-    jalali_date: constr(regex=r'^\d{4}/\d{2}/\d{2}$')
+    jalali_date: str
     date_at: datetime
     deleted_at: Optional[datetime] = None
     time: time
