@@ -2,6 +2,27 @@ from typing import Optional,List
 from pydantic import BaseModel
 from app.models.category import Category as Item
 
+
+column_info = [
+  {
+    "title": "id",
+    "datatype": "int"
+  },
+  {
+    "title": "title",
+    "datatype": "str"
+  },
+  {
+    "title": "description",
+    "datatype": "str"
+  },
+  {
+    "title": "image",
+    "datatype": "str"
+  }
+]
+
+
 class CategoryCreate(Item):
     id: Optional[int] = None 
 
