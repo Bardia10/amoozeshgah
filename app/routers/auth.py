@@ -32,7 +32,7 @@ async def login(request: Request, user: UserLogin, db=Depends(get_db)):
         return UserLoginResponse(
             message="Login successful",
             token=token_record.token,
-            user_id=user.id
+            user_id=existing_user['id']
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
