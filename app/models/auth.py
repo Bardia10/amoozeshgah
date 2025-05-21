@@ -8,3 +8,4 @@ class UserLogin(BaseModel):
 class UserLoginResponse(BaseModel):
     message: str
     token: str
+    user_id: int
