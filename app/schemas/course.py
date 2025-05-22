@@ -53,3 +53,10 @@ class PostCourseResponse(BaseModel):
 class DeleteCourseResponse(BaseModel):
     id : int
     message: str
+
+class CourseUpdate(Item):
+    id: Optional[int] = None
+
+class UpdateCourseResponse(BaseModel):
+    id: int
+    message: str

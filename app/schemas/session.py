@@ -62,3 +62,10 @@ class SessionCreateInput(BaseModel):
 
 class SessionCreateResponse(BaseModel):
     message: str
+
+class SessionUpdate(Session):
+    id: Optional[int] = None
+
+class UpdateSessionResponse(BaseModel):
+    id: int
+    message: str

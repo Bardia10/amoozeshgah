@@ -10,7 +10,9 @@ from app.schemas.enroll import (
     PostEnrollResponse,
     SubmitEnrollResponse,
     DeleteEnrollResponse,
-    VerifyEnrollResponse
+    VerifyEnrollResponse,
+    EnrollUpdate,  
+    UpdateEnrollResponse
 )
 from app.repository.enroll import EnrollRepository as ItemRepository
 from app.repository.user import UserRepository 
@@ -156,6 +158,25 @@ async def verify_enroll(token: str , amount: int , db=Depends(get_db)):
         return VerifyEnrollResponse(
             message="Payment verified successfully."
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/{item_id}", response_model=UpdateEnrollResponse, dependencies=[Depends(verify_admin)])
+async def update_item(item_id: int, item: EnrollUpdate, db=Depends(get_db)):
+    try:
+        # Instantiate the repository with the connection
+        item_repo = ItemRepository(db)
+        # Perform the update operation
+        result = await item_repo.update(item_id, item)
+
+        if result:
+            return UpdateEnrollResponse(
+                id=item_id,
+                message="Item updated successfully"
+            )
+        else:
+            raise HTTPException(status_code=404, detail="Item not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     

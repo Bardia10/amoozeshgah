@@ -89,3 +89,10 @@ class PostUserResponse(BaseModel):
 class DeleteUserResponse(BaseModel):
     id : int
     message: str
+
+class UserUpdate(User):
+    id: Optional[int] = None
+
+class UpdateUserResponse(BaseModel):
+    id: int
+    message: str

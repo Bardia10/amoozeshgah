@@ -48,3 +48,10 @@ class PostInstrumentResponse(BaseModel):
 class DeleteInstrumentResponse(BaseModel):
     id : int
     message: str
+
+class InstrumentUpdate(Item):
+    id: Optional[int] = None
+
+class UpdateInstrumentResponse(BaseModel):
+    id: int
+    message: str

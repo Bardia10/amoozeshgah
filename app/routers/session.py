@@ -3,7 +3,9 @@ from app.schemas.session import (
     SessionCreate,
     SessionCreateResponse,
     SessionCreateInput,
-    GetEnrollsSessionsResponse
+    GetEnrollsSessionsResponse,
+    SessionUpdate,  
+    UpdateSessionResponse
 )
 from app.repository.session import SessionRepository 
 from app.repository.enroll import EnrollRepository 
@@ -55,39 +57,21 @@ async def read_items(
 
 
 
-# @router.get("/{teacher_id}", response_model=GetTeacherSchedulesResponse)
-# async def read_items(
-#     teacher_id: int,  # This is the path parameter
-#     db=Depends(get_db),
-#     user=Depends(verify_admin_self_teacher)
-# ):
-#     try:
-#         # Instantiate the repository with the connection
-#         teacher_schedule_repo = TeacherScheduleRepository(db)
-#         enroll_repo = EnrollRepository(db)
-#         scheds = await teacher_schedule_repo.get_by_teacher(teacher_id)
-#         classes = await enroll_repo.get_by_teacher(teacher_id)
-#         return GetTeacherSchedulesResponse(
-#             classes=[dict(item) for item in classes],
-#             busy=[dict(item) for item in scheds]
-#         )
 
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
+@router.put("/{item_id}", response_model=UpdateSessionResponse, dependencies=[Depends(verify_admin)])
+async def update_item(item_id: int, item: SessionUpdate, db=Depends(get_db)):
+    try:
+        # Instantiate the repository with the connection
+        item_repo = ItemRepository(db)
+        # Perform the update operation
+        result = await item_repo.update(item_id, item)
 
-
-
-# @router.put("/{teacher_id}", dependencies=[Depends(verify_jwt)], response_model=UpdateTeacherSchedulesResponse)
-# async def update_sched(body: UpdateTeacherSchedules,teacher_id: int,db=Depends(get_db),user=Depends(verify_admin_self_teacher)):
-#     try:
-#         teacher_schedule_repo = TeacherScheduleRepository(db)
-#         await teacher_schedule_repo.insert_many(body.busy)
-#         await teacher_schedule_repo.delete_many(body.free)
-
-
-#         return UpdateTeacherSchedulesResponse(
-#             message="schedules updated successfully"
-#         )
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-
+        if result:
+            return UpdateSessionResponse(
+                id=item_id,
+                message="Item updated successfully"
+            )
+        else:
+            raise HTTPException(status_code=404, detail="Item not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

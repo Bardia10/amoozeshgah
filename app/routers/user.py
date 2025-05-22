@@ -5,6 +5,8 @@ from app.schemas.user import (
     GetUserResponse,
     PostUserResponse,
     DeleteUserResponse,
+    UserUpdate,  
+    UpdateUserResponse
 )
 from app.repository.user import UserRepository as ItemRepository
 from app.dependencies.db import get_db
@@ -64,6 +66,25 @@ async def delete_item(item_id: int, db=Depends(get_db)):
             return DeleteUserResponse(
                 id=item_id,
                 message="Item deleted successfully"
+            )
+        else:
+            raise HTTPException(status_code=404, detail="Item not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/{item_id}", response_model=UpdateUserResponse, dependencies=[Depends(verify_admin)])
+async def update_item(item_id: int, item: UserUpdate, db=Depends(get_db)):
+    try:
+        # Instantiate the repository with the connection
+        item_repo = ItemRepository(db)
+        # Perform the update operation
+        result = await item_repo.update(item_id, item)
+
+        if result:
+            return UpdateUserResponse(
+                id=item_id,
+                message="Item updated successfully"
             )
         else:
             raise HTTPException(status_code=404, detail="Item not found")

@@ -57,3 +57,4 @@ class PostFamilyResponse(BaseModel):
 class DeleteFamilyResponse(BaseModel):
     id : int
     message: str
+

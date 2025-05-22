@@ -1,12 +1,12 @@
 from fastapi import APIRouter, HTTPException, Depends
 from app.schemas.family import (
     FamilyCreate,
-    FamilyUpdate,  # Add a schema for updating items
     GetFamiliesResponse,
     GetFamilyResponse,
     PostFamilyResponse,
     DeleteFamilyResponse,
-    UpdateFamilyResponse,  # Add a response schema for update
+    FamilyUpdate,  
+    UpdateFamilyResponse
 )
 from app.repository.family import FamilyRepository as ItemRepository
 from app.dependencies.db import get_db

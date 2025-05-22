@@ -92,3 +92,10 @@ class DeleteEnrollResponse(BaseModel):
 
 class VerifyEnrollResponse(BaseModel):
     message: str
+
+class EnrollUpdate(Item):
+    id: Optional[int] = None
+
+class UpdateEnrollResponse(BaseModel):
+    id: int
+    message: str

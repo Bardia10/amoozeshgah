@@ -46,3 +46,10 @@ class PostCategoryResponse(BaseModel):
 class DeleteCategoryResponse(BaseModel):
     id : int
     message: str
+
+class CategoryUpdate(Item):
+    id: Optional[int] = None
+
+class UpdateCategoryResponse(BaseModel):
+    id: int
+    message: str

@@ -48,3 +48,10 @@ class PostClassResponse(BaseModel):
 class DeleteClassResponse(BaseModel):
     id : int
     message: str
+
+class ClassUpdate(Item):
+    id: Optional[int] = None
+
+class UpdateClassResponse(BaseModel):
+    id: int
+    message: str
