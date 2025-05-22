@@ -6,19 +6,23 @@ from app.models.category import Category as Item
 column_info = [
   {
     "title": "id",
-    "datatype": "int"
+    "datatype": "int",
+    "description": "ID of the object"
   },
   {
     "title": "title",
-    "datatype": "str"
+    "datatype": "str",
+    "description": "Title of the object"
   },
   {
     "title": "description",
-    "datatype": "str"
+    "datatype": "str",
+    "description": "Description of the object"
   },
   {
     "title": "image",
-    "datatype": "str"
+    "datatype": "str",
+    "description": "Image URL of the object"
   }
 ]
 
@@ -32,6 +36,7 @@ class GetCategoryResponse(BaseModel):
 
 class GetCategoriesResponse(BaseModel):
     items: List[Item]
+    column_info: list = column_info
 
     
 class PostCategoryResponse(BaseModel):
