@@ -5,6 +5,13 @@ from app.models.family import Family as Item
 class FamilyCreate(Item):
     id: Optional[int] = None 
 
+class FamilyUpdate(Item):
+    id: Optional[int] = None 
+
+class UpdateFamilyResponse(BaseModel):
+    id: int
+    message: str
+
 class GetFamilyResponse(BaseModel):
     item: Item
 

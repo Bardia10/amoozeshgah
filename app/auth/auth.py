@@ -1,5 +1,5 @@
 import datetime
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, Header
 from passlib.context import CryptContext
 from jose import jwt, JWTError
@@ -31,12 +31,12 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 # Function to generate JWT
 def generate_jwt(sub, role):
-    created_at = datetime.utcnow()
-    expired_at = created_at + timedelta(days=4)
+    created_at = datetime.now(timezone.utc)
+    expired_at = created_at + timedelta(minutes=1)
     payload = {
         "sub": str(sub),
         "role": role,
-        "exp": expired_at  # Token expires in specified days
+        "exp": expired_at.timestamp()
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 

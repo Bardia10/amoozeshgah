@@ -49,6 +49,30 @@ class CommonRepository:
         # Optionally return a confirmation message or the result of the operation
         return result
 
+    async def update(self, item_id: int, item):
+        # Ensure the item is an instance of the provided model
+        if not isinstance(item, self.model):
+            raise ValueError(f"Expected an instance of {self.model.__name__}, got {type(item).__name__}")
+
+        # Convert the item to a dictionary, excluding 'id' as it's not updatable
+        item_data = item.dict(exclude={"id"})
+
+        # Prepare the fields and values for the SQL query
+        set_clause = ', '.join(f"{key} = ${i + 1}" for i, key in enumerate(item_data.keys()))
+        values = list(item_data.values())
+
+        # Append the item_id to the values list for the WHERE clause
+        values.append(item_id)
+
+        # Create the SQL update query
+        query = f"UPDATE {self.table_name} SET {set_clause} WHERE id = ${len(values)}"
+
+        # Execute the query
+        result = await self.connection.execute(query, *values)
+
+        # Return the result of the operation (e.g., number of rows updated)
+        return result
+
 
 
 
