@@ -4,6 +4,7 @@ from app.repository.token import TokenRepository
 from app.models.auth import UserLoginResponse, UserLogin
 from app.dependencies.db import get_db
 from app.dependencies.common import limiter
+from app.dependencies.auth import verify_admin, verify_admin_self_teacher, verify_jwt
 from app.auth.auth import hash_password, verify_password, generate_jwt
 from datetime import datetime, timedelta, time, date
 
@@ -37,3 +38,14 @@ async def login(request: Request, user: UserLogin, db=Depends(get_db)):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get('/check_self')
+async def check_self(user_id: int, user: dict = Depends(verify_jwt)):
+    if user_id == user["id"]:
+        return user
+    else:
+        raise HTTPException(status_code=403, detail="Access restricted")
+
+
+
