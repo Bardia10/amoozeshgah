@@ -8,7 +8,8 @@ from app.schemas.user import (
     UserUpdate,  
     UpdateUserResponse,
     UpdateUsersPassword,
-    UpdateUsersPasswordResponse
+    UpdateUsersPasswordResponse,
+    GetTeachersPublicResponse
 )
 from app.repository.user import UserRepository as ItemRepository
 from app.dependencies.db import get_db
@@ -106,6 +107,19 @@ async def update_users_password(body: UpdateUsersPassword,user_id: int,db=Depend
 
         return UpdateUsersPasswordResponse(
             message="password updated successfully"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/teachers/public", response_model=GetTeachersPublicResponse)
+async def read_items(db=Depends(get_db)):
+    try:
+        # Instantiate the repository with the connection
+        item_repo = ItemRepository(db)
+        records = await item_repo.get_teachers_public()
+        return GetTeachersPublicResponse(
+            items=[dict(record.items()) for record in records]
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

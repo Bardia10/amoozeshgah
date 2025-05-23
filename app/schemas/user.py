@@ -102,3 +102,13 @@ class UpdateUsersPassword(BaseModel):
 
 class UpdateUsersPasswordResponse(BaseModel):
         message: str
+
+
+
+class TeacherPublic(BaseModel):
+    id: int
+    firstname: str
+    lastname: str
+    image:Optional[str] = None
+class GetTeachersPublicResponse(BaseModel):
+    items: List[TeacherPublic]

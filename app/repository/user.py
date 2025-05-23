@@ -34,4 +34,8 @@ class UserRepository(CommonRepository):
         item.contact,
         item.ssn,
         item.year_born
-    )
+        )
+
+    async def get_teachers_public(self):
+        query = f"SELECT id,firstname, lastname , image FROM {self.table_name} WHERE role = $1"
+        return await self.connection.fetch(query, "teacher")

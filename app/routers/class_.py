@@ -115,3 +115,5 @@ async def read_items(course_id: int,db=Depends(get_db)):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+

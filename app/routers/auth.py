@@ -13,7 +13,6 @@ router = APIRouter()
 @router.post("/login", response_model=UserLoginResponse)
 @limiter.limit("5/minute")  # Limit to 5 login attempts per minute
 async def login(request: Request, user: UserLogin, db=Depends(get_db)):  
-    print("ok")
     try:
 
         # Instantiate repositories with the connection
