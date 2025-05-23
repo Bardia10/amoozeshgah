@@ -73,6 +73,20 @@ class CommonRepository:
         # Return the result of the operation (e.g., number of rows updated)
         return result
 
+    async def edit_column(self, item_id: int, column_name: str, column_value):
+        # Ensure column_name is safe to use in a SQL query
+        if not column_name.isidentifier():
+            raise ValueError(f"Invalid column name: {column_name}")
+
+        # Create the SQL update query
+        query = f"UPDATE {self.table_name} SET {column_name} = $1 WHERE id = $2"
+
+        # Execute the query
+        result = await self.connection.execute(query, column_value, item_id)
+
+        # Optionally return the result of the operation (e.g., number of rows updated)
+        return result
+
 
 
 

@@ -90,3 +90,28 @@ async def update_item(item_id: int, item: ClassUpdate, db=Depends(get_db)):
             raise HTTPException(status_code=404, detail="Item not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/by_teacher/{teacher_id}", response_model=GetClassesResponse)
+async def read_items(teacher_id: int,db=Depends(get_db)):
+    try:
+        # Instantiate the repository with the connection
+        item_repo = ItemRepository(db)
+        records = await item_repo.get_by_teacher(teacher_id)
+        return GetClassesResponse(
+            items=[dict(record.items()) for record in records]
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/by_course/{course_id}", response_model=GetClassesResponse)
+async def read_items(course_id: int,db=Depends(get_db)):
+    try:
+        # Instantiate the repository with the connection
+        item_repo = ItemRepository(db)
+        records = await item_repo.get_by_course(course_id)
+        return GetClassesResponse(
+            items=[dict(record.items()) for record in records]
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

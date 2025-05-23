@@ -32,7 +32,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 # Function to generate JWT
 def generate_jwt(sub, role):
     created_at = datetime.now(timezone.utc)
-    expired_at = created_at + timedelta(minutes=1)
+    expired_at = created_at + timedelta(days=4)
     payload = {
         "sub": str(sub),
         "role": role,

@@ -90,3 +90,16 @@ async def update_item(item_id: int, item: FamilyUpdate, db=Depends(get_db)):
             raise HTTPException(status_code=404, detail="Item not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/by_parent/{category_id}", response_model=GetFamiliesResponse)
+async def read_items(category_id: int,db=Depends(get_db)):
+    try:
+        # Instantiate the repository with the connection
+        item_repo = ItemRepository(db)
+        records = await item_repo.get_by_parent(category_id)
+        return GetFamiliesResponse(
+            items=[dict(record.items()) for record in records]
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

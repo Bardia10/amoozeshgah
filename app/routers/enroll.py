@@ -89,7 +89,7 @@ async def delete_item(item_id: int, db=Depends(get_db)):
 async def create_item(item: EnrollSubmit, db=Depends(get_db)):
     try:
         username=str(item.ssn)
-        password=str(item.birth_year)
+        password=str(item.ssn)
         hashed_password = hash_password(password)
         # Instantiate the repository with the connection
         item_repo = ItemRepository(db)

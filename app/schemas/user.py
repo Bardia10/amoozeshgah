@@ -96,3 +96,9 @@ class UserUpdate(User):
 class UpdateUserResponse(BaseModel):
     id: int
     message: str
+
+class UpdateUsersPassword(BaseModel):
+    new_password: str
+
+class UpdateUsersPasswordResponse(BaseModel):
+        message: str

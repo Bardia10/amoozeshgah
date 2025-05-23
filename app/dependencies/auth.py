@@ -60,25 +60,25 @@ def verify_admin(user: dict = Depends(verify_jwt)):
 
 
 # Dependency to check if user is an admin or is asking for themself
-def verify_admin_self(user_id,user: dict = Depends(verify_jwt)):
-    print(user)
+def verify_admin_self_teacher(
+    teacher_id: int, user: dict = Depends(verify_jwt)):
     if user["role"]=="admin":
         pass
     elif user["role"]=="teacher":
         if user["id"] == user_id:
             pass
         else:
-            raise HTTPException(status_code=403, detail="Not enough permissions")
+            raise HTTPException(status_code=403, detail="Not enough permissons")
     else:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     return user
 
 
-def verify_admin_self_teacher(
-    teacher_id: int, user: dict = Depends(verify_jwt)  # Ensure `verify_jwt` is executed and returns the user object
-):
-    # Pass the resolved `user` object to `verify_admin_self`
-    return verify_admin_self(user_id=teacher_id, user=user)
+# def verify_admin_self_teacher(
+#     teacher_id: int, user: dict = Depends(verify_jwt)  # Ensure `verify_jwt` is executed and returns the user object
+# ):
+#     # Pass the resolved `user` object to `verify_admin_self`
+#     return verify_admin_self_teacher_handler(user_id=teacher_id, user=user)
 
 
 # Dependency to check if user is a student
@@ -86,3 +86,21 @@ def verify_student(user: dict = Depends(verify_jwt)):
     if user.get("role") != "student":
         raise HTTPException(status_code=403, detail="Not enough permissions")
     return user
+
+def verify_admin_self(
+    user_id: int, user: dict = Depends(verify_jwt)):
+    if user["role"]=="admin":
+        pass
+    else:
+        if user["id"] == user_id:
+            pass
+        else:
+            raise HTTPException(status_code=403, detail="Not enough permissions")
+
+    return user
+
+# def verify_admin_self(
+#     user_id: int, user: dict = Depends(verify_jwt)  # Ensure `verify_jwt` is executed and returns the user object
+# ):
+#     # Pass the resolved `user` object to `verify_admin_self`
+#     return verify_admin_self2(user_id=user_id, user=user)

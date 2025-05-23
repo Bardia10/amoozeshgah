@@ -6,16 +6,19 @@ from app.schemas.user import (
     PostUserResponse,
     DeleteUserResponse,
     UserUpdate,  
-    UpdateUserResponse
+    UpdateUserResponse,
+    UpdateUsersPassword,
+    UpdateUsersPasswordResponse
 )
 from app.repository.user import UserRepository as ItemRepository
 from app.dependencies.db import get_db
-from app.dependencies.auth import verify_admin
+from app.auth.auth import hash_password
+from app.dependencies.auth import verify_admin, verify_admin_self, verify_jwt
 
 # Define the prefix for all routes
-router = APIRouter(prefix="/users", dependencies=[Depends(verify_admin)])
+router = APIRouter(prefix="/users")
 
-@router.get("/", response_model=GetUsersResponse)
+@router.get("/", response_model=GetUsersResponse, dependencies=[Depends(verify_admin)])
 async def read_items(db=Depends(get_db)):
     try:
         # Instantiate the repository with the connection
@@ -28,7 +31,7 @@ async def read_items(db=Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{item_id}", response_model=GetUserResponse)
+@router.get("/{item_id}", response_model=GetUserResponse, dependencies=[Depends(verify_admin)])
 async def read_item(item_id: int, db=Depends(get_db)):
     try:
         # Instantiate the repository with the connection
@@ -41,7 +44,7 @@ async def read_item(item_id: int, db=Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/", response_model=PostUserResponse)
+@router.post("/", response_model=PostUserResponse, dependencies=[Depends(verify_admin)])
 async def create_item(item: UserCreate, db=Depends(get_db)):
     try:
         # Instantiate the repository with the connection
@@ -55,7 +58,7 @@ async def create_item(item: UserCreate, db=Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/{item_id}", response_model=DeleteUserResponse)
+@router.delete("/{item_id}", response_model=DeleteUserResponse, dependencies=[Depends(verify_admin)])
 async def delete_item(item_id: int, db=Depends(get_db)):
     try:
         # Instantiate the repository with the connection
@@ -90,3 +93,20 @@ async def update_item(item_id: int, item: UserUpdate, db=Depends(get_db)):
             raise HTTPException(status_code=404, detail="Item not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@router.put("/change_password/{user_id}", dependencies=[Depends(verify_jwt)], response_model=UpdateUsersPasswordResponse)
+async def update_users_password(body: UpdateUsersPassword,user_id: int,db=Depends(get_db) ,user=Depends(verify_admin_self)):
+    try:
+        hashed_password = hash_password(body.new_password)
+
+        user_repo = ItemRepository(db)
+        await user_repo.edit_column(user_id ,'password_hash',hashed_password)
+
+        return UpdateUsersPasswordResponse(
+            message="password updated successfully"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
