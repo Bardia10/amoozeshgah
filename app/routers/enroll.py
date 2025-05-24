@@ -19,9 +19,10 @@ from app.repository.user import UserRepository
 from app.repository.class_ import ClassRepository 
 from app.repository.pay_token import PayTokenRepository 
 from app.repository.payment import PaymentRepository 
+from app.repository.token import TokenRepository
 from app.dependencies.db import get_db
 from app.dependencies.auth import verify_admin
-from app.auth.auth import hash_password
+from app.auth.auth import hash_password, generate_jwt
 from app.services.payment_services import verify_payment , request_payment , create_pay_url
 from datetime import datetime,time,timedelta
 
@@ -96,6 +97,7 @@ async def create_item(item: EnrollSubmit, db=Depends(get_db)):
         user_repo = UserRepository(db)
         class_repo = ClassRepository(db)
         pay_token_repo = PayTokenRepository(db)
+        token_repo = TokenRepository(db)
 
         user_info = UserCreate(username=username, password_hash=hashed_password, role="student", firstname=item.firstname,lastname=item.lastname, bio=item.bio , contact=item.phone, ssn=item.ssn , year_born=item.birth_year)
         user = await user_repo.add_or_update(user_info)
@@ -115,10 +117,16 @@ async def create_item(item: EnrollSubmit, db=Depends(get_db)):
         url = create_pay_url(token)
         pay_token = PayTokenCreate(token=token ,enroll_id=new_enroll.id, created_at= datetime.utcnow() ,expires_at = datetime.utcnow() + timedelta(days=1))
         await pay_token_repo.create(pay_token)
-        print('y')
+
+        token_record = generate_jwt(user_id, "student")
+
+        # Save the token in the database
+        await token_repo.create(token_record)
+
         return SubmitEnrollResponse(
             message="enrolled successfully",
-            url=url
+            url=url,
+            token=token_record.token
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -84,6 +84,7 @@ class PostEnrollResponse(BaseModel):
 class SubmitEnrollResponse(BaseModel):
     url : str
     message: str
+    token: str
 
 class DeleteEnrollResponse(BaseModel):
     id : int
