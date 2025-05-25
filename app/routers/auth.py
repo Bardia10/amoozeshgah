@@ -49,4 +49,7 @@ async def check_self(user_id: int, user: dict = Depends(verify_jwt)):
         raise HTTPException(status_code=403, detail="Access restricted")
 
 
+@router.get('/me')
+async def check_self(user: dict = Depends(verify_jwt)):
+    return user
 
