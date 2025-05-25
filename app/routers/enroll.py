@@ -109,13 +109,17 @@ async def create_item(item: EnrollSubmit, db=Depends(get_db)):
           raise HTTPException(status_code=404, detail=f"Class with ID {item.class_id} not found")
         class_credit = 4
         class_price = class_info["price"]
-        print('s')
+
         new_enroll = EnrollCreate(student_id=user_id , class_id=item.class_id ,  time=item.time, date_at=datetime.utcnow(), status=0, day=item.day ,credit=class_credit,credit_spent=0)
+
         new_enroll = await item_repo.create(new_enroll)
-        print('x')
-        token=request_payment(class_price)
+
+        token=await request_payment(class_price,db)
+
         url = create_pay_url(token)
-        pay_token = PayTokenCreate(token=token ,enroll_id=new_enroll.id, created_at= datetime.utcnow() ,expires_at = datetime.utcnow() + timedelta(days=1))
+        expires_at = datetime.utcnow() + timedelta(days=1)
+
+        pay_token = PayTokenCreate(token=token ,enroll_id=new_enroll.id, created_at= datetime.utcnow() ,expires_at=expires_at)
         await pay_token_repo.create(pay_token)
 
         token_record = generate_jwt(user_id, "student")
@@ -126,6 +130,8 @@ async def create_item(item: EnrollSubmit, db=Depends(get_db)):
         return SubmitEnrollResponse(
             message="enrolled successfully",
             url=url,
+            url_expiration = expires_at,
+            url_token = token,
             token=token_record.token
         )
     except Exception as e:
@@ -145,8 +151,8 @@ async def verify_enroll(token: str , amount: int , db=Depends(get_db)):
         
 
         # Verify the payment
-        answer = verify_payment(token=token, amount=amount)
-        
+        answer = await verify_payment(token=token, amount=amount, db=db)
+        print(answer)
         # Check if the payment was successful
         if not answer:
             raise HTTPException(status_code=400, detail="Payment has not taken place.")
@@ -161,7 +167,7 @@ async def verify_enroll(token: str , amount: int , db=Depends(get_db)):
         new_enroll = await item_repo.update_status(id=pay_request['enroll_id'], status=1)
 
         # Update the pay_tokens table
-        await pay_token_repo.soft_delete(pay_request['id'])
+        # await pay_token_repo.soft_delete(pay_request['id'])
 
         return VerifyEnrollResponse(
             message="Payment verified successfully."

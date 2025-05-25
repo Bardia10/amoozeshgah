@@ -85,6 +85,8 @@ class SubmitEnrollResponse(BaseModel):
     url : str
     message: str
     token: str
+    url_expiration: datetime
+    url_token: str
 
 class DeleteEnrollResponse(BaseModel):
     id : int

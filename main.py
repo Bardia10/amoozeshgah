@@ -9,6 +9,7 @@ from app.routers.teacher_schedule import router as schedule
 from app.routers.session import router as session
 from app.routers.user import router as user
 from app.routers.auth import router as auth
+from app.routers.pseudo_paypal import router as pseudo_paypal
 import uvicorn
 
 # Create the FastAPI app
@@ -25,6 +26,7 @@ app.include_router(schedule)
 app.include_router(session)
 app.include_router(user)
 app.include_router(auth)
+app.include_router(pseudo_paypal)
 
 # Add an entry point to run the app when the script is executed
 if __name__ == "__main__":
