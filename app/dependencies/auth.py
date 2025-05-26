@@ -59,9 +59,9 @@ def verify_admin(user: dict = Depends(verify_jwt)):
     return user
 
 
-# Dependency to check if user is an admin or is asking for themself
+# Dependency to check if user is an admin or is asking for themself 
 def verify_admin_self_teacher(
-    teacher_id: int, user: dict = Depends(verify_jwt)):
+    user_id: int, user: dict = Depends(verify_jwt)):
     if user["role"]=="admin":
         pass
     elif user["role"]=="teacher":
