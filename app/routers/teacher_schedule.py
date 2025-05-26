@@ -33,7 +33,7 @@ async def read_items(teacher_id: int, db=Depends(get_db)):
 
 @router.get("/{teacher_id}", response_model=GetTeacherSchedulesResponse)
 async def read_items(
-    teacher_id: int,  # This is the path parameter
+    user_id: int,  # This is the path parameter
     db=Depends(get_db),
     user=Depends(verify_admin_self_teacher)
 ):
@@ -52,26 +52,6 @@ async def read_items(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
-@router.get("/{teacher_id}", response_model=GetTeacherSchedulesResponse)
-async def read_items(
-    teacher_id: int,  # This is the path parameter
-    db=Depends(get_db),
-    user=Depends(verify_admin_self_teacher)
-):
-    try:
-        # Instantiate the repository with the connection
-        teacher_schedule_repo = TeacherScheduleRepository(db)
-        enroll_repo = EnrollRepository(db)
-        scheds = await teacher_schedule_repo.get_by_teacher(teacher_id)
-        classes = await enroll_repo.get_by_teacher(teacher_id)
-        return GetTeacherSchedulesResponse(
-            classes=[dict(item) for item in classes],
-            busy=[dict(item) for item in scheds]
-        )
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 
