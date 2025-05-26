@@ -112,3 +112,11 @@ class StudentsEnroll(Item):
 class GetStudentsEnrollsResponse(BaseModel):
     items: List[StudentsEnroll]
     
+
+class TeachersEnroll(Item):
+    student_firstname: str
+    student_lastname: str
+    course_title: str
+
+class GetTeachersEnrollsResponse(BaseModel):
+    items: List[TeachersEnroll]

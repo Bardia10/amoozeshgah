@@ -63,3 +63,23 @@ class EnrollRepository(CommonRepository):
             enrolls.student_id = $1 AND enrolls.status=1;
         """
         return await self.connection.fetch(query, student_id)
+
+    async def get_for_teacher(self, teacher_id: int):
+        query = """
+        SELECT 
+            enrolls.*, 
+            student.firstname AS student_firstname,
+            student.lastname AS student_lastname,
+            courses.title AS course_title
+        FROM 
+            enrolls
+        JOIN 
+            classes ON enrolls.class_id = classes.id
+        JOIN 
+            users AS student ON enrolls.student_id = student.id
+        JOIN 
+            courses ON classes.course_id = courses.id
+        WHERE 
+            classes.teacher_id = $1 AND enrolls.status=1;
+        """
+        return await self.connection.fetch(query, teacher_id)
