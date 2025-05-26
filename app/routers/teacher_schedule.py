@@ -55,13 +55,20 @@ async def read_items(
 
 
 
-@router.put("/{teacher_id}", dependencies=[Depends(verify_jwt)], response_model=UpdateTeacherSchedulesResponse)
-async def update_sched(body: UpdateTeacherSchedules,teacher_id: int,db=Depends(get_db),user=Depends(verify_admin_self_teacher)):
+@router.put("/{user_id}", dependencies=[Depends(verify_jwt)], response_model=UpdateTeacherSchedulesResponse)
+async def update_sched(body: UpdateTeacherSchedules,user_id: int,db=Depends(get_db),user=Depends(verify_admin_self_teacher)):
     try:
+        busy_rows = body.busy
+        free_rows = body.free
+        
+        for item in busy_rows:
+            item.teacher_id = user_id       
+        for item in free_rows:
+            item.teacher_id = user_id
+
         teacher_schedule_repo = TeacherScheduleRepository(db)
         await teacher_schedule_repo.insert_many(body.busy)
         await teacher_schedule_repo.delete_many(body.free)
-
 
         return UpdateTeacherSchedulesResponse(
             message="schedules updated successfully"

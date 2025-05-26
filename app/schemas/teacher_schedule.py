@@ -1,5 +1,5 @@
 from typing import Optional,List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime,time
 from app.models.teacher_schedule import TeacherSchedule 
 
@@ -24,8 +24,7 @@ class GetTeacherSchedulesResponse(BaseModel):
 
 
 class CreateTeacherSchedule(TeacherSchedule):
-    class Config:
-        fields = {"id": {"exclude": True}}
+    teacher_id: Optional[int]= Field(default=None)
 
 class UpdateTeacherSchedules(BaseModel):
     free: List[CreateTeacherSchedule]
