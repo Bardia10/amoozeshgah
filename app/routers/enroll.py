@@ -12,7 +12,8 @@ from app.schemas.enroll import (
     DeleteEnrollResponse,
     VerifyEnrollResponse,
     EnrollUpdate,  
-    UpdateEnrollResponse
+    UpdateEnrollResponse,
+    GetStudentsEnrollsResponse
 )
 from app.repository.enroll import EnrollRepository as ItemRepository
 from app.repository.user import UserRepository 
@@ -21,7 +22,7 @@ from app.repository.pay_token import PayTokenRepository
 from app.repository.payment import PaymentRepository 
 from app.repository.token import TokenRepository
 from app.dependencies.db import get_db
-from app.dependencies.auth import verify_admin
+from app.dependencies.auth import verify_admin, verify_jwt,verify_admin_self
 from app.auth.auth import hash_password, generate_jwt
 from app.services.payment_services import verify_payment , request_payment , create_pay_url
 from datetime import datetime,time,timedelta
@@ -195,3 +196,15 @@ async def update_item(item_id: int, item: EnrollUpdate, db=Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
     
   
+
+@router.get("/for_student/{user_id}", response_model=GetStudentsEnrollsResponse, dependencies=[Depends(verify_jwt)])
+async def read_item(user_id: int, db=Depends(get_db),user=Depends(verify_admin_self)):
+    try:
+        # Instantiate the repository with the connection
+        item_repo = ItemRepository(db)
+        records = await item_repo.get_for_student(user_id)
+        return GetStudentsEnrollsResponse(
+            items=[dict(record.items()) for record in records]
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

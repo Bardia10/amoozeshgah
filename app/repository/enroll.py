@@ -42,3 +42,24 @@ class EnrollRepository(CommonRepository):
         # Fetch the current credit_spent value for the given id
         query = f"UPDATE enrolls SET status = $1 WHERE id = $2"
         result = await self.connection.execute(query, status,id)
+
+
+    async def get_for_student(self, student_id: int):
+        query = """
+        SELECT 
+            enrolls.*, 
+            teacher.firstname AS teacher_firstname,
+            teacher.lastname AS teacher_lastname,
+            courses.title AS course_title
+        FROM 
+            enrolls
+        JOIN 
+            classes ON enrolls.class_id = classes.id
+        JOIN 
+            users AS teacher ON classes.teacher_id = teacher.id
+        JOIN 
+            courses ON classes.course_id = courses.id
+        WHERE 
+            enrolls.student_id = $1 AND enrolls.status=1;
+        """
+        return await self.connection.fetch(query, student_id)

@@ -102,3 +102,13 @@ class EnrollUpdate(Item):
 class UpdateEnrollResponse(BaseModel):
     id: int
     message: str
+
+
+class StudentsEnroll(Item):
+    teacher_firstname: str
+    teacher_lastname: str
+    course_title: str
+
+class GetStudentsEnrollsResponse(BaseModel):
+    items: List[StudentsEnroll]
+    
