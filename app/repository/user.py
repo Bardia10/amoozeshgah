@@ -52,8 +52,9 @@ class UserRepository(CommonRepository):
                 bio = $5,
                 contact = $6,
                 ssn = $7,
-                year_born = $8
-            WHERE id = $9
+                year_born = $8,
+                image = $9
+            WHERE id = $10
             RETURNING id
         """
         return await self.connection.fetchrow(
@@ -66,14 +67,15 @@ class UserRepository(CommonRepository):
             item.contact,
             item.ssn,
             item.year_born,
+            item.image,
             item_id
         )
 
 
     async def add(self, item: UserCreate):
         query = """
-            INSERT INTO users (username, password_hash, role, firstname, lastname, bio, contact, ssn, year_born)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            INSERT INTO users (username, password_hash, role, firstname, lastname, bio, contact, ssn, year_born,image)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,$10)
             RETURNING id
         """
         return await self.connection.fetchrow(
@@ -86,5 +88,6 @@ class UserRepository(CommonRepository):
             item.bio,
             item.contact,
             item.ssn,
-            item.year_born
+            item.year_born,
+            item.image
         )

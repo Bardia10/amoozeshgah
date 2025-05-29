@@ -143,7 +143,8 @@ async def add_item(item: UserCreate, db=Depends(get_db)):
             bio=item.bio,
             contact=item.contact,
             ssn=item.ssn,
-            year_born=item.year_born
+            year_born=item.year_born,
+            image= item.image
         )
 
         # Attempt to update the user
@@ -168,10 +169,10 @@ async def update_item(item: UserCreate,user_id: int, db=Depends(get_db)):
         password=str(item.password_hash)
         hashed_password = hash_password(password)
         
-        user_info = UserCreate(username=item.username, password_hash=hashed_password, role=item.role, firstname=item.firstname,lastname=item.lastname, bio=item.bio , contact=item.contact, ssn=item.ssn , year_born=item.year_born)
+        user_info = UserCreate(username=item.username, password_hash=hashed_password, role=item.role, firstname=item.firstname,lastname=item.lastname, bio=item.bio , contact=item.contact, ssn=item.ssn , year_born=item.year_born, image=item.image)
 
         user = await item_repo.update(user_id,user_info)
-        
+
         if user is None:
             raise HTTPException(status_code=404, detail=f"User with id {user_id} not found.")
 
