@@ -4,7 +4,7 @@ from app.models.user import User , Role
 
 class UserCreate(BaseModel):
     username: str
-    password_hash: str
+    password_hash: Optional[str] = None
     firstname: Optional[str] = None
     lastname: Optional[str] = None
     role: Role
