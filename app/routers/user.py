@@ -45,18 +45,18 @@ async def read_item(item_id: int, db=Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/", response_model=PostUserResponse, dependencies=[Depends(verify_admin)])
-async def create_item(item: UserCreate, db=Depends(get_db)):
-    try:
-        # Instantiate the repository with the connection
-        item_repo = ItemRepository(db)
-        response = await item_repo.create(item)
-        return PostUserResponse(
-            id=response.id,
-            message="item added successfully"
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# @router.post("/", response_model=PostUserResponse, dependencies=[Depends(verify_admin)])
+# async def create_item(item: UserCreate, db=Depends(get_db)):
+#     try:
+#         # Instantiate the repository with the connection
+#         item_repo = ItemRepository(db)
+#         response = await item_repo.create(item)
+#         return PostUserResponse(
+#             id=response.id,
+#             message="item added successfully"
+#         )
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/{item_id}", response_model=DeleteUserResponse, dependencies=[Depends(verify_admin)])
@@ -77,23 +77,23 @@ async def delete_item(item_id: int, db=Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/{item_id}", response_model=UpdateUserResponse, dependencies=[Depends(verify_admin)])
-async def update_item(item_id: int, item: UserUpdate, db=Depends(get_db)):
-    try:
-        # Instantiate the repository with the connection
-        item_repo = ItemRepository(db)
-        # Perform the update operation
-        result = await item_repo.update(item_id, item)
+# @router.put("/{item_id}", response_model=UpdateUserResponse, dependencies=[Depends(verify_admin)])
+# async def update_item(item_id: int, item: UserUpdate, db=Depends(get_db)):
+#     try:
+#         # Instantiate the repository with the connection
+#         item_repo = ItemRepository(db)
+#         # Perform the update operation
+#         result = await item_repo.update(item_id, item)
 
-        if result:
-            return UpdateUserResponse(
-                id=item_id,
-                message="Item updated successfully"
-            )
-        else:
-            raise HTTPException(status_code=404, detail="Item not found")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+#         if result:
+#             return UpdateUserResponse(
+#                 id=item_id,
+#                 message="Item updated successfully"
+#             )
+#         else:
+#             raise HTTPException(status_code=404, detail="Item not found")
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 
 
@@ -124,3 +124,63 @@ async def read_items(db=Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+
+@router.post("/", response_model=PostUserResponse, dependencies=[Depends(verify_admin)])
+async def add_item(item: UserCreate, db=Depends(get_db)):
+    try:
+        # Instantiate the repository with the connection
+        item_repo = ItemRepository(db)
+        password = str(item.password_hash)
+        hashed_password = hash_password(password)
+        
+        user_info = UserCreate(
+            username=item.username,
+            password_hash=hashed_password,
+            role=item.role,
+            firstname=item.firstname,
+            lastname=item.lastname,
+            bio=item.bio,
+            contact=item.contact,
+            ssn=item.ssn,
+            year_born=item.year_born
+        )
+
+        # Attempt to update the user
+        user = await item_repo.add(user_info)
+
+        user_id = user['id']
+
+        return PostUserResponse(
+            id=user_id,
+            message="Item added successfully"
+        )
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/{user_id}", response_model=PostUserResponse, dependencies=[Depends(verify_admin)])
+async def update_item(item: UserCreate,user_id: int, db=Depends(get_db)):
+    try:
+        # Instantiate the repository with the connection
+        item_repo = ItemRepository(db)
+        password=str(item.password_hash)
+        hashed_password = hash_password(password)
+        
+        user_info = UserCreate(username=item.username, password_hash=hashed_password, role=item.role, firstname=item.firstname,lastname=item.lastname, bio=item.bio , contact=item.contact, ssn=item.ssn , year_born=item.year_born)
+
+        user = await item_repo.update(user_id,user_info)
+        
+        if user is None:
+            raise HTTPException(status_code=404, detail=f"User with id {user_id} not found.")
+
+        user_id = user['id']
+
+        return PostUserResponse(
+            id=user_id,
+            message="item updated successfully"
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

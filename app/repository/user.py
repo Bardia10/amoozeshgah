@@ -39,3 +39,54 @@ class UserRepository(CommonRepository):
     async def get_teachers_public(self):
         query = f"SELECT id,firstname, lastname , image FROM {self.table_name} WHERE role = $1"
         return await self.connection.fetch(query, "teacher")
+
+
+    async def update(self,item_id:int, item: UserCreate):
+        query = """
+            UPDATE users
+            SET 
+                username = $1,
+                password_hash = $2,
+                role = $3,
+                firstname = $4,
+                lastname = $5,
+                bio = $6,
+                contact = $7,
+                ssn = $8,
+                year_born = $9
+            WHERE id = $10
+            RETURNING id
+        """
+        return await self.connection.fetchrow(
+            query,
+            item.username,
+            item.password_hash,
+            item.role,
+            item.firstname,
+            item.lastname,
+            item.bio,
+            item.contact,
+            item.ssn,
+            item.year_born,
+            item_id
+        )
+
+
+    async def add(self, item: UserCreate):
+        query = """
+            INSERT INTO users (username, password_hash, role, firstname, lastname, bio, contact, ssn, year_born)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING id
+        """
+        return await self.connection.fetchrow(
+            query,
+            item.username,
+            item.password_hash,
+            item.role,
+            item.firstname,
+            item.lastname,
+            item.bio,
+            item.contact,
+            item.ssn,
+            item.year_born
+        )
