@@ -41,26 +41,24 @@ class UserRepository(CommonRepository):
         return await self.connection.fetch(query, "teacher")
 
 
-    async def update(self,item_id:int, item: UserCreate):
+    async def update(self, item_id: int, item: UserCreate):
         query = """
             UPDATE users
             SET 
                 username = $1,
-                password_hash = $2,
-                role = $3,
-                firstname = $4,
-                lastname = $5,
-                bio = $6,
-                contact = $7,
-                ssn = $8,
-                year_born = $9
-            WHERE id = $10
+                role = $2,
+                firstname = $3,
+                lastname = $4,
+                bio = $5,
+                contact = $6,
+                ssn = $7,
+                year_born = $8
+            WHERE id = $9
             RETURNING id
         """
         return await self.connection.fetchrow(
             query,
             item.username,
-            item.password_hash,
             item.role,
             item.firstname,
             item.lastname,
